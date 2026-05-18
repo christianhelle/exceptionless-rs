@@ -80,6 +80,10 @@ The client automatically captures the error message and type. Use builder method
 - `.user_identity(id)` — associate the error with a user
 - `.data(key, value)` — attach arbitrary metadata
 
+![Error overview](images/error-overview.png)
+
+![Error details](images/error-details.png)
+
 ### 4. Send a Log
 
 ```rust
@@ -102,6 +106,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 Available log levels: `"trace"`, `"debug"`, `"info"`, `"warn"`, `"error"`, `"fatal"`. If not set, the default is `"info"`.
 
+![Log messages](images/log-messages.png)
+
+![Log message overview](images/log-message-overview.png)
+
+![Log message extended data](images/log-message-extended-data.png)
+
 ### 5. Track Feature Usage
 
 ```rust
@@ -120,6 +130,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 ```
+
+![Feature tracking](images/feature-tracking.png)
+
+![Feature tracking overview](images/feature-tracking-overview.png)
+
+![Feature tracking extended data](images/feature-tracking-extended-data.png)
 
 ---
 
