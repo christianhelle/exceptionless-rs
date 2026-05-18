@@ -104,6 +104,22 @@
 **What:** Scribe orchestrates end-of-session archival: stage decided decisions from inbox, write orchestration logs per agent, write session log, update agent history, and commit the squad/ changes in one logical group.
 **Why:** Preserves team continuity and keeps audit trail of work coordination.
 
+### 2026-05-18T15:54:28.101+02:00: Repository rename to exceptionless-rs
+**By:** Leela
+**What:** Renamed GitHub repository from `exceptionless.rust` to `exceptionless-rs` and updated all project metadata and configuration files.
+**Why:** The hyphenated name `exceptionless-rs` is the idiomatic Rust crate naming convention, signals intent clearly on GitHub, and aligns with how users will discover and reference the SDK.
+**Files updated:**
+- `Cargo.toml` — repository URL
+- `README.md` — GitHub issues link
+- `.squad/team.md` — project name (2 references)
+- `.squad/agents/scribe/history.md` — project context
+- `.squad/agents/scribe/charter.md` — project context
+- `.squad/agents/ralph/history.md` — project context
+- `.squad/agents/ralph/charter.md` — project context
+**GitHub outcome:** ✅ Repository successfully renamed via `gh repo rename`
+**Remote configuration:** ✅ Git remote updated from `git@github.com:christianhelle/exceptionless.rust.git` to `https://github.com/christianhelle/exceptionless-rs.git`
+**Next:** Scribe will merge this decision to decisions.md on session close.
+
 ## Governance
 
 - All meaningful changes require team consensus
