@@ -63,6 +63,47 @@
 **Why:** First example is part of the product. New users land on README; developers use docs.rs; hands-on learners run examples. README must be self-contained. This unblocks onboarding for the first slice (error/log/feature) even though crate-level docs and more examples can follow.
 **Documentation Contract:** README leads with "here's what works now" + feature matrix; Configuration shown with builder pattern; Examples live in examples/ and require compilation (keeps README maintainable); No lib.rs doc comments on public types yet (deferred to next tier).
 
+### 2026-05-18T11:26:29.220+02:00: User directive
+**By:** Christian Helle (via Copilot)
+**What:** Commit the current changes in small logical groups without a co-author.
+**Why:** User request — captured for team memory
+
+### 2026-05-18T11:44:38.999+02:00: Rename public client type
+**By:** Bender
+**What:** The public Rust facade is now ExceptionlessClient, and the crate no longer re-exports Client as the primary SDK type.
+**Why:** The original Exceptionless .NET client uses ExceptionlessClient, and mirroring that name keeps cross-SDK terminology aligned without changing Rust-side behavior or the shared submission path.
+**Files:** src/client.rs, src/lib.rs, src/builder.rs, src/error.rs, tests/*.rs, examples/*.rs, README.md
+
+### 2026-05-18T11:44:38.999+02:00: Rename client tests
+**By:** Amy
+**What:** Treat the `Client` → `ExceptionlessClient` rename as a public API compatibility gate: acceptance tests, regression tests, and example compilation must all bind to `ExceptionlessClient`, with a regression covering `ExceptionlessClient::with_api_key`.
+**Why:** Happy-path runtime tests alone would miss stale public imports in examples and convenience-constructor usage. The rename is not proven until the public surface compiles everywhere users touch it.
+
+### 2026-05-18T11:44:38.999+02:00: Client → ExceptionlessClient Rename Documentation Update
+**By:** Fry (Docs/DevRel)
+**What:** Renamed `Client` struct to `ExceptionlessClient` throughout user-facing documentation and codebase to align with Exceptionless.NET naming conventions.
+**Why:** Developers migrating from .NET will recognize the `ExceptionlessClient` type immediately, reducing onboarding friction and improving mental model transfer. Verification: ✅ All examples compile; ✅ Tests pass; ✅ Documentation consistent.
+
+### 2026-05-18T11:52:41.203+02:00: Commit discipline default
+**By:** Leela
+**What:** Default repo policy is to stage and commit each completed logical slice immediately, use concise Conventional Commit subjects, omit co-author trailers unless explicitly requested, and keep generated/runtime artifacts out of commits.
+**Why:** Small, verified commits preserve a readable progress history, keep boundaries sharp, and reduce the risk of mixing unrelated work or committing local runtime output.
+
+### 2026-05-18T14:28:06.933+02:00: Real backtrace capture in map_error
+**By:** Bender
+**What:** `map_error()` in `src/error.rs` now uses the `backtrace` crate to capture a real call-frame stack trace at the point the error is reported to the SDK, rather than formatting the error's Debug representation. `capture_backtrace()` resolves symbols eagerly and applies a two-level filter: (1) Discard frames with no `::`; (2) Discard frames from `exceptionless::`, `backtrace::`, `std::*`, `tokio::*`, `core::*`. Inner errors receive no backtrace. `backtrace = "0.3"` is now a runtime dependency. Backtraces are always captured unconditionally; frame detail is best in debug builds with symbols.
+**Why:** The previous debug-dump approach stored the error's Debug string as a single frame with zero location data. The new approach surfaces the user call site so developers can see where the error was reported. New regression file: `tests/regression_error_stack_trace.rs`.
+
+### 2026-05-18T14:28:06.933+02:00: Stack trace test coverage gaps — update required
+**By:** Amy
+**What:** Existing assertion in `tests/acceptance_errors.rs` relies on the broken behavior (debug dump as method name); after Bender's fix, frame[0].method will be a real function name, not the error type. Required updates: (1) Replace brittle `contains("OuterError")` with assertions proving real frames (non-empty, .rs files, line numbers); (2) Add `stack_trace_from_stdlib_error_has_real_frames` test mirroring the example exactly, asserting multiple frames, .rs filenames, line numbers, and no debug-dump format; (3) Add `stack_trace_frames_include_error_site` test verifying at least one frame references user code. Implementation notes: Prefer `Backtrace::force_capture()` for deterministic tests; use `backtrace` crate (not std) for frame access; filter out `std::`, `core::`, `tokio::`, `futures::`, `alloc::` noise; debug builds have best symbol resolution.
+**Why:** After Bender's fix, existing assertions will fail; coverage gaps mask the usefulness of the backtrace. Real frames must include user code location, not just SDK internals.
+
+### 2026-05-18T14:28:06.933+02:00: Copilot directive — session workflow
+**By:** Christian Helle (via Copilot)
+**What:** Scribe orchestrates end-of-session archival: stage decided decisions from inbox, write orchestration logs per agent, write session log, update agent history, and commit the squad/ changes in one logical group.
+**Why:** Preserves team continuity and keeps audit trail of work coordination.
+
 ## Governance
 
 - All meaningful changes require team consensus

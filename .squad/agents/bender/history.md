@@ -16,3 +16,7 @@
 ## 2026-05-18T10:43:35Z
 **Scribe Team Update:**
 Fixed config normalization defect and delivered SDK first-slice facade with Client::{error,log,feature} builders and shared submit_batch send path.
+
+## 2026-05-18T12:28:06Z
+**Scribe Team Update:**
+Completed real backtrace capture using `backtrace` crate with eager symbol resolution and two-level frame filtering. Renamed public type to ExceptionlessClient. Amy specified stack-trace coverage gaps (three new regression tests required). Fry updated all docs/examples. Three commits delivered. Decision inbox merged to decisions.md.

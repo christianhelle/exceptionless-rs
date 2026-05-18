@@ -17,3 +17,4 @@
 ## Team Coordination
 
 - 2026-05-18T10:43:35.499Z: Test gate proposal merged to decisions.md. Leela confirmed first slice scope. Fry confirmed docs won't block testing. Ready to scaffold test infrastructure when Bender/Farnsworth lay out module structure.
+- 2026-05-18T12:28:06Z: Bender completed backtrace capture refactor and Client → ExceptionlessClient rename. Amy analyzed stack-trace test coverage gaps and specified three required regression tests. Fry updated all documentation and examples. Three commits delivered: real backtrace frames, test updates, and deepened examples. Decision inbox merged to decisions.md.
