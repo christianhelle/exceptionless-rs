@@ -1,4 +1,4 @@
-# exceptionless
+# Exceptionless Client for Rust
 
 A Rust client for [Exceptionless](https://exceptionless.com) — capture errors, logs, and feature usage events with a clean, async-first API.
 
@@ -42,7 +42,7 @@ use exceptionless::ExceptionlessClient;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = ExceptionlessClient::with_api_key("YOUR_API_KEY");
-    
+
     // Ready to report events
     Ok(())
 }
@@ -56,10 +56,10 @@ use exceptionless::ExceptionlessClient;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = ExceptionlessClient::with_api_key("YOUR_API_KEY");
-    
+
     // Simulate an error
     let result: Result<i32, _> = "not a number".parse();
-    
+
     if let Err(e) = result {
         client.error(&e)
             .tag("parsing")
@@ -67,7 +67,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .send()
             .await?;
     }
-    
+
     Ok(())
 }
 ```
@@ -92,14 +92,14 @@ use exceptionless::ExceptionlessClient;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = ExceptionlessClient::with_api_key("YOUR_API_KEY");
-    
+
     client.log("User logged in")
         .level("info")
         .tag("authentication")
         .user_identity("user@example.com")
         .send()
         .await?;
-    
+
     Ok(())
 }
 ```
@@ -120,13 +120,13 @@ use exceptionless::ExceptionlessClient;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = ExceptionlessClient::with_api_key("YOUR_API_KEY");
-    
+
     client.feature("export_to_pdf")
         .tag("premium_feature")
         .user_identity("user@example.com")
         .send()
         .await?;
-    
+
     Ok(())
 }
 ```
@@ -154,11 +154,11 @@ use exceptionless::transport::http::HttpTransport;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = ClientConfig::new("YOUR_API_KEY")
         .with_server_url("https://your-exceptionless-server.com");
-    
+
     let client = ExceptionlessClient::new(config, HttpTransport::default());
-    
+
     client.log("Server configured").send().await?;
-    
+
     Ok(())
 }
 ```
@@ -208,4 +208,3 @@ See the [GitHub issues](https://github.com/christianhelle/exceptionless.rust/iss
 ## License
 
 MIT
-
