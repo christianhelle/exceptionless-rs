@@ -12,7 +12,10 @@
 - 2026-05-18T10:43:35.499+02:00: Example naming: `{feature}_{style}.rs` (e.g., `error_basic.rs`, `config_from_env.rs`). Start with three core examples (error, log, feature) before expanding.
 - 2026-05-18T10:43:35.499+02:00: Exceptionless.Net README references external docs heavily; Rust SDK should do the same but lead with "here's what works now" to avoid new-user paralysis.
 - 2026-05-18T10:43:35.499+02:00: First example is part of the product. If setup feels confusing or requires external docs lookup, SDK is not ready. README must contain complete minimal example.
+- 2026-05-18T10:43:35.499+02:00: README completed with three-tiered structure: Quick Start (copy-paste ready), Configuration (custom server + disable toggle), and Examples (four runnable patterns covering error, log, feature, and config). Examples verified to compile; tokio added as dev-dependency (macros + rt-multi-thread). All core MVP capabilities (error/log/feature with tags/data/identity) documented with inline code.
 
 ## Team Coordination
 
 - 2026-05-18T10:43:35.499Z: Docs MVP structure merged to decisions.md. Leela confirmed first slice scope (error/log/feature → shared transport). Amy confirmed test harness blocks docs examples. Tier order decouples README (ready before code) from examples (ready after modules stable). Ready to draft README template when Bender scaffolds lib.rs.
+- 2026-05-18T10:43:35.499+02:00: README and examples delivered. Four example files created (error_basic, log_structured, feature_track, config_custom); all compile clean. README explains "what's supported" vs "not yet supported", covers three configuration patterns (basic API key, custom server, disable toggle), and includes complete copy-paste-ready minimal examples inline. Decision on documentation direction written to inbox.
+
