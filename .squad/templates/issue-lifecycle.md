@@ -143,8 +143,9 @@ cd ../worktrees/{issue-number}
 
 **Actions:**
 1. Agent makes code changes
-2. Commits reference the issue number
-3. Pushes branch to remote
+2. After each completed logical slice, agent stages only the relevant files and commits immediately
+3. Commits use concise Conventional Commit subjects and reference the issue number
+4. Pushes branch to remote
 
 **Commit message format:**
 ```
@@ -155,9 +156,12 @@ cd ../worktrees/{issue-number}
 {breaking change notice if applicable}
 
 Closes #{issue-number}
-
-Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 ```
+
+**Commit discipline:**
+- Prefer multiple small logical commits over one large batch commit.
+- Do not add `Co-authored-by` trailers unless the user explicitly asks for them.
+- Keep generated/runtime artifacts out of the index.
 
 **Commit types:** `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`, `style`, `build`, `ci`
 

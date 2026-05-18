@@ -152,17 +152,15 @@ fix: address review feedback on PR #{pr_number}
 
 - Switched to path.dirname() for worktree path resolution (comment #18234)
 - Updated error message to include file path (comment #18235)
-
-Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 ```
 
 For single-comment fixes, a shorter format works:
 
 ```
 fix: use path.dirname() for worktree consistency (PR #{pr_number} review)
-
-Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 ```
+
+If review feedback splits into independent fixes, prefer multiple small traceable commits over one batch commit. Do not add `Co-authored-by` trailers unless the user explicitly asks for them, and keep generated/runtime artifacts out of the commit.
 
 ## AGENT WORKFLOW (Summary)
 

@@ -233,6 +233,17 @@ The `name` parameter generates the human-readable agent ID shown in the tasks pa
 2. Acknowledge briefly: `"📌 Captured. {one-line summary of the directive}."`
 3. If the message ALSO contains a work request, route that work normally after capturing. If it's directive-only, you're done — no agent spawn needed.
 
+### Commit Discipline
+
+This repository defaults to **frequent, small, logical commits**. Apply this unless the user explicitly says otherwise.
+
+1. When a coherent slice is complete and verified, stage only that slice and commit it immediately. Do not wait until the end of the session if a clean commit boundary already exists.
+2. Prefer multiple small commits over one large "parity" commit. Keep unrelated changes in separate commits.
+3. Use concise Conventional Commit subjects.
+4. Do **not** add `Co-authored-by` trailers unless the user explicitly asks for them.
+5. Keep generated and runtime artifacts out of commits (build outputs, caches, logs, temp files, screenshots, local state).
+6. If code, docs, and tests must move together to keep the tree coherent, commit that cohesive set together as one logical slice.
+
 ### Routing
 
 The routing table determines **WHO** handles work. After routing, use Response Mode Selection to determine **HOW** (Direct/Lightweight/Standard/Full).
