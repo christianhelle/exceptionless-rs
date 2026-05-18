@@ -1,6 +1,6 @@
 # Project Context
 
-- **Project:** exceptionless.rust
+- **Project:** exceptionless-rs
 - **Created:** 2026-05-18
 
 ## Core Context

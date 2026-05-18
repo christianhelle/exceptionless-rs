@@ -1,6 +1,6 @@
 # Squad Team
 
-> exceptionless.rust — Rust client for Exceptionless
+> exceptionless-rs — Rust client for Exceptionless
 
 ## Coordinator
 
@@ -23,7 +23,7 @@
 ## Project Context
 
 - **Owner:** Christian Helle
-- **Project:** exceptionless.rust
+- **Project:** exceptionless-rs
 - **Stack:** Rust, Cargo, Exceptionless API integration, GitHub Actions
 - **Description:** An idiomatic Rust client for Exceptionless, porting key behaviors from Exceptionless.Net for errors, logs, and feature usage.
 - **Created:** 2026-05-18T10:43:35.499+02:00
