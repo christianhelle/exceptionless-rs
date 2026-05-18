@@ -1,0 +1,22 @@
+{
+  "universe_usage_history": [
+    {
+      "universe": "Futurama",
+      "assignment_id": "2026-05-18-exceptionless-rust-initial-team",
+      "used_at": "2026-05-18T10:43:35.499+02:00"
+    }
+  ],
+  "assignment_cast_snapshots": {
+    "2026-05-18-exceptionless-rust-initial-team": {
+      "universe": "Futurama",
+      "agents": {
+        "lead": "Leela",
+        "rust-sdk-dev": "Bender",
+        "integration-dev": "Farnsworth",
+        "tester": "Amy",
+        "docs-devrel": "Fry"
+      },
+      "created_at": "2026-05-18T10:43:35.499+02:00"
+    }
+  }
+}
