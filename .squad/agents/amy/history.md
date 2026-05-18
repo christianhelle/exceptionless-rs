@@ -10,6 +10,8 @@
 - 2026-05-18T10:43:35.499+02:00: The first Rust milestone needs coverage for errors, logs, and feature usage, with parity-minded tests around the shared submission path.
 - 2026-05-18T10:43:35.499+02:00: Treat errors, logs, and feature usage as one shared submission slice; a fake transport plus queue flush helper should be the first Rust test harness.
 - 2026-05-18T10:43:35.499+02:00: Reference parity points live in Exceptionless.Net `src/Exceptionless/Extensions/ExceptionlessClientExtensions.cs`, `src/Exceptionless/ExceptionlessClient.cs`, `src/Exceptionless/Extensions/ExceptionExtensions.cs`, and `src/Exceptionless/Queue/DefaultEventQueue.cs`.
+- 2026-05-18T10:43:35.499+02:00: First-slice acceptance coverage now lives in `tests/support/mod.rs`, `tests/acceptance_errors.rs`, `tests/acceptance_logs.rs`, `tests/acceptance_feature_usage.rs`, and `tests/regression_submission_path.rs`.
+- 2026-05-18T10:43:35.499+02:00: Concrete top-level error type names are preserved by the generic `Client::error<E>()` path in `src/client.rs` and `src/error.rs`; nested `source()` errors still only expose trait-object typing through the standard library API.
 
 ## Team Coordination
 
