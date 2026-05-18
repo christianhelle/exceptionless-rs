@@ -78,9 +78,18 @@ async fn error_entrypoint_shapes_payload_and_preserves_context() -> Result<(), B
     assert!(error_payload["type"]
         .as_str()
         .is_some_and(|value| value.ends_with("OuterError")));
-    assert!(error_payload["stack_trace"][0]["method"]
-        .as_str()
-        .is_some_and(|value| value.contains("OuterError")));
+    // Stack trace must contain real call frames (qualified Rust paths, not error Debug reprs)
+    let frames = error_payload["stack_trace"]
+        .as_array()
+        .expect("stack_trace should be an array");
+    assert!(!frames.is_empty(), "stack_trace should not be empty");
+    assert!(
+        frames[0]["method"]
+            .as_str()
+            .is_some_and(|m| m.contains("::")),
+        "first frame method should be a qualified Rust path, got: {}",
+        frames[0]["method"]
+    );
     assert_eq!(error_payload["inner"]["message"], "inner boom");
 
     Ok(())

@@ -74,9 +74,9 @@ where
 {
     let mut payload = ErrorPayload::new(error.to_string()).with_type(type_name::<E>());
 
-    let debug = format!("{error:?}");
-    if !debug.trim().is_empty() {
-        payload = payload.with_stack_trace(vec![StackFrame::new(debug)]);
+    let frames = capture_backtrace();
+    if !frames.is_empty() {
+        payload = payload.with_stack_trace(frames);
     }
 
     if let Some(inner) = error.source() {
@@ -89,14 +89,59 @@ where
 fn map_dyn_error(error: &(dyn StdError + 'static)) -> ErrorPayload {
     let mut payload = ErrorPayload::new(error.to_string()).with_type(type_name_of_val(error));
 
-    let debug = format!("{error:?}");
-    if !debug.trim().is_empty() {
-        payload = payload.with_stack_trace(vec![StackFrame::new(debug)]);
-    }
-
     if let Some(inner) = error.source() {
         payload = payload.with_inner(map_dyn_error(inner));
     }
 
     payload
 }
+
+fn capture_backtrace() -> Vec<StackFrame> {
+    let bt = backtrace::Backtrace::new();
+    let mut frames = Vec::new();
+
+    for frame in bt.frames() {
+        for symbol in frame.symbols() {
+            let name = symbol
+                .name()
+                .map(|n| format!("{n:#}"))
+                .unwrap_or_default();
+
+            if name.is_empty() || is_noise_frame(&name) {
+                continue;
+            }
+
+            let mut sf = StackFrame::new(&name);
+            if let (Some(file), Some(line)) = (symbol.filename(), symbol.lineno()) {
+                sf = sf.with_file(file.to_string_lossy().into_owned(), line);
+                if let Some(col) = symbol.colno() {
+                    sf = sf.with_column(col);
+                }
+            }
+            frames.push(sf);
+        }
+    }
+
+    frames
+}
+
+fn is_noise_frame(name: &str) -> bool {
+    // Non-Rust symbols (Windows/libc bootstrap, C functions) have no `::`
+    if !name.contains("::") {
+        return true;
+    }
+    const NOISE_PREFIXES: &[&str] = &[
+        "exceptionless::",
+        "backtrace::",
+        "std::rt::",
+        "std::sys::",
+        "std::panicking::",
+        "core::ops::function::",
+        "core::hint::",
+        "tokio::runtime::",
+        "tokio::task::",
+        "__rust_",
+    ];
+    NOISE_PREFIXES.iter().any(|p| name.starts_with(p))
+}
+
