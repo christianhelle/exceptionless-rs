@@ -2,14 +2,14 @@ mod support;
 
 use std::error::Error as StdError;
 
-use exceptionless::Client;
+use exceptionless::ExceptionlessClient;
 
 use support::{payload_events, test_config, CapturingTransport};
 
 #[tokio::test]
 async fn feature_entrypoint_maps_name_to_usage_source() -> Result<(), Box<dyn StdError>> {
     let transport = CapturingTransport::success();
-    let client = Client::new(test_config(), transport.clone());
+    let client = ExceptionlessClient::new(test_config(), transport.clone());
 
     client.feature("search").send().await?;
 

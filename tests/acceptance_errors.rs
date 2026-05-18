@@ -5,7 +5,7 @@ use std::{
     fmt::{Display, Formatter},
 };
 
-use exceptionless::Client;
+use exceptionless::ExceptionlessClient;
 use serde_json::json;
 
 use support::{payload_events, test_config, CapturingTransport};
@@ -41,7 +41,7 @@ impl StdError for OuterError {
 #[tokio::test]
 async fn error_entrypoint_shapes_payload_and_preserves_context() -> Result<(), Box<dyn StdError>> {
     let transport = CapturingTransport::success();
-    let client = Client::new(test_config(), transport.clone());
+    let client = ExceptionlessClient::new(test_config(), transport.clone());
     let error = OuterError { source: InnerError };
 
     client

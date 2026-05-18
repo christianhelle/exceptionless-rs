@@ -1,8 +1,8 @@
-use exceptionless::Client;
+use exceptionless::ExceptionlessClient;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::with_api_key("YOUR_API_KEY_HERE");
+    let client = ExceptionlessClient::with_api_key("YOUR_API_KEY_HERE");
 
     // Send an info-level log with metadata
     client

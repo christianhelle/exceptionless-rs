@@ -8,7 +8,7 @@ pub mod log;
 pub mod transport;
 pub mod wire;
 
-pub use client::Client;
+pub use client::ExceptionlessClient;
 pub use error::{ClientError, ErrorEventBuilder};
 pub use feature::FeatureUsageBuilder;
 pub use log::LogEventBuilder;

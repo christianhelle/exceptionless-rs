@@ -2,14 +2,14 @@ mod support;
 
 use std::error::Error as StdError;
 
-use exceptionless::Client;
+use exceptionless::ExceptionlessClient;
 
 use support::{payload_events, test_config, CapturingTransport};
 
 #[tokio::test]
 async fn log_entrypoint_sets_log_contract_and_trims_level() -> Result<(), Box<dyn StdError>> {
     let transport = CapturingTransport::success();
-    let client = Client::new(test_config(), transport.clone());
+    let client = ExceptionlessClient::new(test_config(), transport.clone());
 
     client
         .log("worker started")
@@ -35,7 +35,7 @@ async fn log_entrypoint_sets_log_contract_and_trims_level() -> Result<(), Box<dy
 #[tokio::test]
 async fn log_entrypoint_omits_blank_level() -> Result<(), Box<dyn StdError>> {
     let transport = CapturingTransport::success();
-    let client = Client::new(test_config(), transport.clone());
+    let client = ExceptionlessClient::new(test_config(), transport.clone());
 
     client.log("worker started").level("   ").send().await?;
 

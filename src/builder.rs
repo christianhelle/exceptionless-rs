@@ -1,7 +1,7 @@
 use serde_json::Value;
 
 use crate::{
-    client::Client,
+    client::ExceptionlessClient,
     error::ClientError,
     event::Event,
     transport::{SubmissionResult, Transport},
@@ -9,12 +9,12 @@ use crate::{
 
 #[derive(Debug)]
 pub struct EventBuilder<'a, T: Transport> {
-    client: &'a Client<T>,
+    client: &'a ExceptionlessClient<T>,
     event: Event,
 }
 
 impl<'a, T: Transport> EventBuilder<'a, T> {
-    pub(crate) fn new(client: &'a Client<T>, event: Event) -> Self {
+    pub(crate) fn new(client: &'a ExceptionlessClient<T>, event: Event) -> Self {
         Self { client, event }
     }
 

@@ -1,6 +1,6 @@
 use exceptionless::config::ClientConfig;
 use exceptionless::transport::http::HttpTransport;
-use exceptionless::Client;
+use exceptionless::ExceptionlessClient;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -8,7 +8,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = ClientConfig::new("YOUR_API_KEY_HERE")
         .with_server_url("https://your-exceptionless-server.com");
 
-    let client = Client::new(config, HttpTransport::default());
+    let client = ExceptionlessClient::new(config, HttpTransport::default());
 
     // Send a log to the custom server
     client

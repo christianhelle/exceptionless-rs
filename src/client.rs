@@ -11,18 +11,18 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-pub struct Client<T: Transport = HttpTransport> {
+pub struct ExceptionlessClient<T: Transport = HttpTransport> {
     config: ClientConfig,
     transport: T,
 }
 
-impl Client<HttpTransport> {
+impl ExceptionlessClient<HttpTransport> {
     pub fn with_api_key(api_key: impl Into<String>) -> Self {
         Self::new(ClientConfig::new(api_key), HttpTransport::default())
     }
 }
 
-impl<T: Transport> Client<T> {
+impl<T: Transport> ExceptionlessClient<T> {
     pub fn new(config: ClientConfig, transport: T) -> Self {
         Self { config, transport }
     }

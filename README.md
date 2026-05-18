@@ -37,11 +37,11 @@ exceptionless = "0.1"
 The simplest way to get started:
 
 ```rust
-use exceptionless::Client;
+use exceptionless::ExceptionlessClient;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::with_api_key("YOUR_API_KEY");
+    let client = ExceptionlessClient::with_api_key("YOUR_API_KEY");
     
     // Ready to report events
     Ok(())
@@ -51,11 +51,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ### 3. Report an Error
 
 ```rust
-use exceptionless::Client;
+use exceptionless::ExceptionlessClient;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::with_api_key("YOUR_API_KEY");
+    let client = ExceptionlessClient::with_api_key("YOUR_API_KEY");
     
     // Simulate an error
     let result: Result<i32, _> = "not a number".parse();
@@ -83,11 +83,11 @@ The client automatically captures the error message and type. Use builder method
 ### 4. Send a Log
 
 ```rust
-use exceptionless::Client;
+use exceptionless::ExceptionlessClient;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::with_api_key("YOUR_API_KEY");
+    let client = ExceptionlessClient::with_api_key("YOUR_API_KEY");
     
     client.log("User logged in")
         .level("info")
@@ -105,11 +105,11 @@ Available log levels: `"trace"`, `"debug"`, `"info"`, `"warn"`, `"error"`, `"fat
 ### 5. Track Feature Usage
 
 ```rust
-use exceptionless::Client;
+use exceptionless::ExceptionlessClient;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let client = Client::with_api_key("YOUR_API_KEY");
+    let client = ExceptionlessClient::with_api_key("YOUR_API_KEY");
     
     client.feature("export_to_pdf")
         .tag("premium_feature")
@@ -130,7 +130,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 If you're self-hosting Exceptionless, point the client to your server:
 
 ```rust
-use exceptionless::Client;
+use exceptionless::ExceptionlessClient;
 use exceptionless::config::ClientConfig;
 use exceptionless::transport::http::HttpTransport;
 
@@ -139,7 +139,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = ClientConfig::new("YOUR_API_KEY")
         .with_server_url("https://your-exceptionless-server.com");
     
-    let client = Client::new(config, HttpTransport::default());
+    let client = ExceptionlessClient::new(config, HttpTransport::default());
     
     client.log("Server configured").send().await?;
     
@@ -192,3 +192,4 @@ See the [GitHub issues](https://github.com/christianhelle/exceptionless.rust/iss
 ## License
 
 MIT
+

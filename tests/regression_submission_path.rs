@@ -6,7 +6,7 @@ use exceptionless::{
     config::{ClientConfig, ConfigError},
     event::Event,
     transport::TransportError,
-    Client, ClientError,
+    ClientError, ExceptionlessClient,
 };
 
 use support::{payload_events, test_config, CapturingTransport};
@@ -14,7 +14,7 @@ use support::{payload_events, test_config, CapturingTransport};
 #[tokio::test]
 async fn submit_batch_uses_configured_endpoint_and_bearer_token() -> Result<(), Box<dyn StdError>> {
     let transport = CapturingTransport::success();
-    let client = Client::new(
+    let client = ExceptionlessClient::new(
         test_config().with_server_url("https://alt.example.com/root/"),
         transport.clone(),
     );
@@ -44,7 +44,7 @@ async fn submit_batch_uses_configured_endpoint_and_bearer_token() -> Result<(), 
 #[tokio::test]
 async fn submit_batch_trims_server_url_before_building_endpoint() -> Result<(), Box<dyn StdError>> {
     let transport = CapturingTransport::success();
-    let client = Client::new(
+    let client = ExceptionlessClient::new(
         test_config().with_server_url("  https://alt.example.com/root/  "),
         transport.clone(),
     );
@@ -64,7 +64,7 @@ async fn submit_batch_trims_server_url_before_building_endpoint() -> Result<(), 
 #[tokio::test]
 async fn disabled_config_fails_before_transport_submission() {
     let transport = CapturingTransport::success();
-    let client = Client::new(test_config().with_enabled(false), transport.clone());
+    let client = ExceptionlessClient::new(test_config().with_enabled(false), transport.clone());
 
     let error = client
         .log("blocked")
@@ -82,7 +82,7 @@ async fn disabled_config_fails_before_transport_submission() {
 #[tokio::test]
 async fn blank_api_key_fails_before_transport_submission() {
     let transport = CapturingTransport::success();
-    let client = Client::new(
+    let client = ExceptionlessClient::new(
         ClientConfig::new("   ").with_server_url("https://example.com"),
         transport.clone(),
     );
@@ -100,4 +100,11 @@ async fn blank_api_key_fails_before_transport_submission() {
         ))
     ));
     assert!(transport.requests().is_empty());
+}
+
+#[test]
+fn exceptionless_client_with_api_key_constructor_remains_available() {
+    let client = ExceptionlessClient::with_api_key("test-api-key");
+
+    assert_eq!(client.config().api_key(), "test-api-key");
 }

@@ -7,7 +7,7 @@ use thiserror::Error;
 
 use crate::{
     builder::EventBuilder,
-    client::Client,
+    client::ExceptionlessClient,
     event::Event,
     transport::{SubmissionResult, Transport, TransportError},
     wire::error::{ErrorPayload, StackFrame},
@@ -27,7 +27,7 @@ pub struct ErrorEventBuilder<'a, T: Transport> {
 }
 
 impl<'a, T: Transport> ErrorEventBuilder<'a, T> {
-    pub(crate) fn new<E>(client: &'a Client<T>, error: &'a E) -> Self
+    pub(crate) fn new<E>(client: &'a ExceptionlessClient<T>, error: &'a E) -> Self
     where
         E: StdError + 'static + ?Sized,
     {
