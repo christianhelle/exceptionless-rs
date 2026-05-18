@@ -1,3 +1,4 @@
+use core::num::ParseIntError;
 use exceptionless::ExceptionlessClient;
 
 #[tokio::main]
@@ -5,7 +6,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = ExceptionlessClient::with_api_key("YOUR_API_KEY_HERE");
 
     // Simulate a parsing error
-    let result: Result<i32, _> = "not a number".parse();
+    let result = parse();
 
     match result {
         Err(e) => {
@@ -24,4 +25,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+fn parse() -> Result<i32, ParseIntError> {
+    parse_string_as_integer("not a number")
+}
+
+fn parse_string_as_integer(text: &str) -> Result<i32, ParseIntError> {
+    text.parse()
 }
