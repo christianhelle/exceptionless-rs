@@ -102,10 +102,7 @@ fn capture_backtrace() -> Vec<StackFrame> {
 
     for frame in bt.frames() {
         for symbol in frame.symbols() {
-            let name = symbol
-                .name()
-                .map(|n| format!("{n:#}"))
-                .unwrap_or_default();
+            let name = symbol.name().map(|n| format!("{n:#}")).unwrap_or_default();
 
             if name.is_empty() || is_noise_frame(&name) {
                 continue;
@@ -149,4 +146,3 @@ fn is_noise_frame(name: &str) -> bool {
     ];
     NOISE_PREFIXES.iter().any(|p| name.starts_with(p))
 }
-

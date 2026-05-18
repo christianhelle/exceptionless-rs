@@ -37,11 +37,10 @@ async fn error_stack_trace_contains_real_call_frames() -> Result<(), Box<dyn Std
     assert!(!frames.is_empty(), "stack trace must not be empty");
 
     for frame in frames {
-        let method = frame["method"].as_str().expect("each frame must have a method");
-        assert!(
-            !method.is_empty(),
-            "frame method must not be empty"
-        );
+        let method = frame["method"]
+            .as_str()
+            .expect("each frame must have a method");
+        assert!(!method.is_empty(), "frame method must not be empty");
         assert!(
             method.contains("::"),
             "frame method should be a qualified Rust path, got: {method}"
