@@ -136,10 +136,15 @@ fn is_noise_frame(name: &str) -> bool {
         "std::rt::",
         "std::sys::",
         "std::panicking::",
+        "std::panic::",
+        "std::thread::",
         "core::ops::function::",
         "core::hint::",
+        "core::future::",
+        "core::panic::",
         "tokio::runtime::",
         "tokio::task::",
+        "test::",
         "__rust_",
     ];
     NOISE_PREFIXES.iter().any(|p| name.starts_with(p))
