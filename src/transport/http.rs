@@ -20,7 +20,7 @@ impl HttpTransport {
 impl Default for HttpTransport {
     fn default() -> Self {
         let client = Client::builder()
-            .user_agent(format!("exceptionless.rust/{}", env!("CARGO_PKG_VERSION")))
+            .user_agent(format!("exceptionless-rs/{}", env!("CARGO_PKG_VERSION")))
             .build()
             .expect("failed to build reqwest client");
         Self::new(client)

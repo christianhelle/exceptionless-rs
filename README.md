@@ -201,7 +201,7 @@ To test your integration without submitting to Exceptionless, provide your own `
 
 ## Roadmap
 
-See the [GitHub issues](https://github.com/christianhelle/exceptionless.rust/issues) for upcoming features and known limitations.
+See the [GitHub issues](https://github.com/christianhelle/exceptionless-rs/issues) for upcoming features and known limitations.
 
 ---
 

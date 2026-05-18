@@ -1,7 +1,7 @@
 [package]
 name = "exceptionless"
 authors = ["Christian Helle"]
-repository = "https://github.com/christianhelle/exceptionless.rust"
+repository = "https://github.com/christianhelle/exceptionless-rs"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
