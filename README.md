@@ -215,7 +215,7 @@ cargo run --example error_basic
 
 ---
 
-## Release Scaffolding
+## Release Workflows
 
 Manual release prep lives in GitHub Actions as `Release Scaffolding`.
 
@@ -223,7 +223,16 @@ Manual release prep lives in GitHub Actions as `Release Scaffolding`.
 - Optionally pass `base_version`, or set `RELEASE_BASE_VERSION` in the `release` environment or repository variables
 - The workflow appends the GitHub run number to the base version to produce a unique pre-release version such as `0.1.0-42`
 - It updates `Cargo.toml` in the runner, runs `cargo test` plus `cargo package --allow-dirty`, uploads the packaged `.crate` and checksum as workflow artifacts, and creates a GitHub prerelease with generated notes
-- It does **not** publish the crate to crates.io in this slice
+
+Manual crates.io publishing now lives in GitHub Actions as `Publish to crates.io`.
+
+- Trigger it with `workflow_dispatch`
+- Pass the `release_tag` created by `Release Scaffolding`; the workflow checks out that exact tag and verifies it matches the computed publish version
+- It uses the same `base_version` resolution path as the release scaffold: workflow input, then `RELEASE_BASE_VERSION`, then the workflow default
+- By default it derives the GitHub run number suffix from `release_tag`, and you can optionally pass `run_number_suffix` to override it explicitly
+- Configure the crates.io token as the `CARGO_REGISTRY_TOKEN` secret in the `release` environment, and restrict that environment to the repository default branch in GitHub so arbitrary refs cannot use the publish secret
+- The workflow runs `cargo test`, then `cargo publish --dry-run --locked --allow-dirty`, then `cargo publish --locked --allow-dirty --no-verify`
+- It publishes to crates.io only; it does not create or modify the GitHub prerelease
 
 ---
 
