@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use reqwest::{
-    header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
     Client,
+    header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
 };
 
 use super::{SubmissionRequest, SubmissionResult, Transport, TransportError, TransportResponse};
@@ -66,12 +66,11 @@ fn extract_message(status_code: u16, reason: Option<String>, body: &str) -> Opti
 
     let trimmed = body.trim();
     if !trimmed.is_empty() {
-        if trimmed.starts_with('{') {
-            if let Ok(json) = serde_json::from_str::<serde_json::Value>(trimmed) {
-                if let Some(message) = json.get("message").and_then(|value| value.as_str()) {
-                    return Some(message.to_owned());
-                }
-            }
+        if trimmed.starts_with('{')
+            && let Ok(json) = serde_json::from_str::<serde_json::Value>(trimmed)
+            && let Some(message) = json.get("message").and_then(|value| value.as_str())
+        {
+            return Some(message.to_owned());
         }
 
         if trimmed.len() < 500 {

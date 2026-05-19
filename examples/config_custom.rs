@@ -1,6 +1,6 @@
+use exceptionless::ExceptionlessClient;
 use exceptionless::config::ClientConfig;
 use exceptionless::transport::http::HttpTransport;
-use exceptionless::ExceptionlessClient;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

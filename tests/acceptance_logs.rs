@@ -4,7 +4,7 @@ use std::error::Error as StdError;
 
 use exceptionless::ExceptionlessClient;
 
-use support::{payload_events, test_config, CapturingTransport};
+use support::{CapturingTransport, payload_events, test_config};
 
 #[tokio::test]
 async fn log_entrypoint_sets_log_contract_and_trims_level() -> Result<(), Box<dyn StdError>> {

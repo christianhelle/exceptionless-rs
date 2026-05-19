@@ -6,7 +6,7 @@ use std::{
 };
 
 use exceptionless::ExceptionlessClient;
-use support::{payload_events, test_config, CapturingTransport};
+use support::{CapturingTransport, payload_events, test_config};
 
 #[derive(Debug)]
 struct SimpleError;

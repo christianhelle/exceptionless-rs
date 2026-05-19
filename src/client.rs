@@ -7,7 +7,7 @@ use crate::{
     event::Event,
     feature::FeatureUsageBuilder,
     log::LogEventBuilder,
-    transport::{http::HttpTransport, SubmissionRequest, SubmissionResult, Transport},
+    transport::{SubmissionRequest, SubmissionResult, Transport, http::HttpTransport},
 };
 
 #[derive(Debug, Clone)]

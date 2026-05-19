@@ -3,13 +3,13 @@ mod support;
 use std::error::Error as StdError;
 
 use exceptionless::{
+    ClientError, ExceptionlessClient,
     config::{ClientConfig, ConfigError},
     event::Event,
     transport::TransportError,
-    ClientError, ExceptionlessClient,
 };
 
-use support::{payload_events, test_config, CapturingTransport};
+use support::{CapturingTransport, payload_events, test_config};
 
 #[tokio::test]
 async fn submit_batch_uses_configured_endpoint_and_bearer_token() -> Result<(), Box<dyn StdError>> {

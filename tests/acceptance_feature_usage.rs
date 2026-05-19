@@ -4,7 +4,7 @@ use std::error::Error as StdError;
 
 use exceptionless::ExceptionlessClient;
 
-use support::{payload_events, test_config, CapturingTransport};
+use support::{CapturingTransport, payload_events, test_config};
 
 #[tokio::test]
 async fn feature_entrypoint_maps_name_to_usage_source() -> Result<(), Box<dyn StdError>> {

@@ -9,7 +9,7 @@ use std::{
 use exceptionless::ExceptionlessClient;
 use serde_json::json;
 
-use support::{payload_events, test_config, CapturingTransport};
+use support::{CapturingTransport, payload_events, test_config};
 
 #[derive(Debug)]
 struct InnerError;
@@ -70,15 +70,19 @@ async fn error_entrypoint_shapes_payload_and_preserves_context() -> Result<(), B
     assert_eq!(event["data"]["tenant"], "acme");
     assert_eq!(event["data"]["@user"], "user-42");
     assert_eq!(event["data"]["@version"], "1.2.3");
-    assert!(event["date"]
-        .as_str()
-        .is_some_and(|value| !value.is_empty()));
+    assert!(
+        event["date"]
+            .as_str()
+            .is_some_and(|value| !value.is_empty())
+    );
 
     let error_payload = &event["data"]["@error"];
     assert_eq!(error_payload["message"], "outer boom");
-    assert!(error_payload["type"]
-        .as_str()
-        .is_some_and(|value| value.ends_with("OuterError")));
+    assert!(
+        error_payload["type"]
+            .as_str()
+            .is_some_and(|value| value.ends_with("OuterError"))
+    );
 
     // Stack trace must be non-empty, contain qualified Rust paths, and carry file+line info
     let frames = error_payload["stack_trace"]
