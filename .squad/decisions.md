@@ -168,8 +168,22 @@
 **What:** The manual crates.io publish path should not publish directly from an arbitrary branch snapshot. It must publish the exact `release_tag` produced by `Release Scaffolding`, reuse the shared base-version-plus-suffix scheme, refresh `Cargo.lock` after the in-runner version rewrite, keep `CARGO_REGISTRY_TOKEN` scoped to the actual publish step, and rely on the `release` environment being restricted to the default branch in GitHub settings.
 **Why:** Publish credentials and release versions both drift silently if the workflow is free to run from branch-specific definitions or from code that no longer matches the scaffolded release tag. Separating dry-run verification from the token-bearing `cargo publish --no-verify` step keeps code execution out of the secret-bearing phase while preserving the existing release scaffold.
 
-## Governance
+### 2026-05-20T01:03:55.309+02:00: Approve publish tag fix
+**By:** Amy
+**What:** APPROVED commit `c5359e0` (`fix(ci): trust scaffolded release tag`). The publish workflow now treats `release_tag` as the sole publish-version source, keeps `CARGO_REGISTRY_TOKEN` scoped to the real publish step, preserves the stronger `cargo test --all-targets` gate, and leaves the existing release scaffold behavior intact.
+**Why:** The rejected publish artifact was blocked on version drift risk and secret exposure. This revision closes those gaps without weakening the proven release path.
 
+### 2026-05-20T01:03:55.309+02:00: Publish tag is the source of truth
+**By:** Bender
+**What:** `.github\workflows\publish.yml` now accepts only `release_tag`, derives `publish_version` directly from that scaffolded tag, keeps `CARGO_REGISTRY_TOKEN` scoped to the final publish step, and preserves the proven `cargo test --all-targets` validation gate. `README.md` release docs were updated to match.
+**Why:** Re-deriving publish coordinates from mutable workflow settings can drift from the prerelease artifact that was already reviewed. The publish job should trust the scaffolded tag, minimize secret exposure, and keep the same validation bar already proven locally.
+
+### 2026-05-20T01:03:55.309+02:00: Independent dependency audit hardening
+**By:** Farnsworth
+**What:** Keep optional hardening independent from the locked release/publish path by adding a separate dependency-audit workflow instead of editing `publish.yml`, `release.yml`, or README release guidance.
+**Why:** Reviewer lockout on the publish artifact means release-path edits are no longer safe to carry in this slice. A standalone `cargo audit` workflow still adds value by catching RustSec advisories on dependency changes and on a weekly cadence.
+
+## Governance
 - All meaningful changes require team consensus
 - Document architectural decisions here
 - Keep history focused on work, decisions focused on direction
