@@ -209,18 +209,14 @@ cargo run --example error_basic
 
 ---
 
-## Testing
-
-To test your integration without submitting to Exceptionless, provide your own `Transport` implementation. For now, the easiest approach is to use a fake transport in your test harness (details coming in a future update).
-
----
-
-## Roadmap
-
-See the [GitHub issues](https://github.com/christianhelle/exceptionless-rs/issues) for upcoming features and known limitations.
-
----
-
 ## License
+
+This project is open source and available under the MIT License
+
+#
+
+For tips and tricks on software development, check out [my blog](https://christianhelle.com)
+
+If you find this useful and feel a bit generous then feel free to [buy me a coffee ☕](https://www.buymeacoffee.com/christianhelle)
 
 MIT
