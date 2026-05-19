@@ -11,6 +11,7 @@
 - 2026-05-18T10:43:35.499+02:00: First transport slice uses `ClientConfig -> SubmissionRequest -> Transport` so tests can fake transport while asserting exact endpoint/auth/payload wire fields.
 - 2026-05-18T10:43:35.499+02:00: Wire payload lives in `src/wire/event.rs` and `src/wire/error.rs`; `Event::log` trims/guards `@level`, `Event::feature_usage` maps feature name to `source`, and errors serialize under `@error`.
 - 2026-05-18T10:43:35.499+02:00: HTTP submission is in `src/transport/http.rs` and posts JSON arrays to `/api/v2/events` with Bearer auth; response handling classifies success, retry, split-and-retry (413), and discard in `src/transport/response.rs`.
+- 2026-05-20T00:16:20.423+02:00: Release/versioning scaffolding lives in `.github/workflows/release.yml`; manual `workflow_dispatch` resolves `base_version` from input or `RELEASE_BASE_VERSION`, appends `GITHUB_RUN_NUMBER`, rewrites `Cargo.toml` in-runner only, packages the crate, uploads `.crate` plus `.sha256`, and creates a GitHub prerelease with generated notes. User-facing release usage is documented in `README.md`.
 
 ## 2026-05-18T10:43:35Z
 **Scribe Team Update:**

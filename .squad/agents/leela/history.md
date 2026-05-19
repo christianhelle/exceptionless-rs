@@ -7,6 +7,7 @@
 
 ## Learnings
 
+- 2026-05-19T23:57:10.867+02:00: Release readiness plan drafted. Identified 10 key ambiguities (MSRV, edition, token provisioning, semver strategy, cross-platform testing, docs site, changelog automation, approval gates, edition 2024 validation, dependency constraints). Proposed 7 slices across 3 phases: Phase 1 (test/docs/audit) is critical path, Phase 2 (version/publish) unblocks crates.io, Phase 3 (notify/security) deferred. Total 12–14 days with parallelization. Owner input required on all ambiguities before Slice 1a begins.
 - 2026-05-18T10:43:35.499+02:00: Team initialized. Start with a greenfield Rust SDK and audit the .NET client before hardening public APIs.
 - 2026-05-18T10:43:35.499+02:00: Exceptionless.Net's MVP surface converges on `src/Exceptionless/ExceptionlessClient.cs`, `src/Exceptionless/EventBuilder.cs`, and `src/Exceptionless/Extensions/ExceptionlessClientExtensions.cs`; errors, logs, and feature usage all become `Event` payloads with types `error`, `log`, and `usage`.
 - 2026-05-18T10:43:35.499+02:00: The wire contract for the first Rust slice is anchored by `src/Exceptionless/Submission/DefaultSubmissionClient.cs`: POST a JSON event array to `/api/v2/events` with `Authorization: Bearer {api_key}` and a user agent, then treat 2xx responses as success.

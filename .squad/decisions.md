@@ -120,6 +120,49 @@
 **Remote configuration:** ✅ Git remote updated from `git@github.com:christianhelle/exceptionless.rust.git` to `https://github.com/christianhelle/exceptionless-rs.git`
 **Next:** Scribe will merge this decision to decisions.md on session close.
 
+### 2026-05-19T23:57:10.867+02:00: Validation surface and release gates
+**By:** Amy
+**What:** Current release-readiness baseline is 13 passing integration tests, 4 compiling examples, and a successful `cargo doc --no-deps`; the must-pass gate for release work is `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test --all-targets`, `cargo doc --no-deps`, and `cargo package --allow-dirty`.
+**Why:** The crate needs an explicit, repeatable validation bar before claiming release readiness or wiring CI around it.
+**Known blockers:** invalid `edition = "2024"`, missing package metadata, no CI workflow, no rustdoc coverage, no unit tests, and no declared MSRV.
+
+### 2026-05-19T23:57:10.867+02:00: Crates.io and docs readiness audit
+**By:** Fry
+**What:** The first publish is blocked by invalid manifest metadata (`edition = "2024"`, missing `description`, missing `categories`, plus other release-facing metadata), and the next documentation gaps are missing crate-level rustdoc, `CHANGELOG.md`, `CONTRIBUTING.md`, and `SECURITY.md`.
+**Why:** crates.io and docs.rs need a minimally complete manifest and documentation surface so the first public release is both publishable and usable.
+
+### 2026-05-19T23:57:10.867+02:00: Release workflow planning boundaries
+**By:** Leela
+**What:** Broad release automation should be phased as quality gates, release management, and observability, but implementation beyond the immediate critical path should wait for owner clarification on MSRV, token ownership, semver policy, platform matrix, docs strategy, changelog curation, approval gates, and dependency constraints.
+**Why:** Workflow scope and policy choices affect CI cost, publish safety, and release semantics, so the team should not over-automate unresolved release decisions.
+
+### 2026-05-20T00:16:20.423+02:00: CI validation workflow baseline
+**By:** Bender
+**What:** Add `.github/workflows/ci.yml` as a single Ubuntu stable Rust job running `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test --all-targets`, `cargo doc --no-deps`, then `cargo package --allow-dirty`.
+**Why:** CI should mirror the proven local release-readiness path instead of inventing a wider matrix before the baseline is stable.
+
+### 2026-05-20T00:16:20.423+02:00: User directive
+**By:** Christian Helle (via Copilot)
+**What:** Have all agents use Claude Opus 4.7 for the rest of the session, but only for this session.
+**Why:** User request — captured for team memory
+
+### 2026-05-20T00:16:20.423+02:00: Approve release-gate slice d79ae32
+**By:** Amy
+**What:** APPROVED Bender's `green-local-release-gates` slice at commit `d79ae32` after verifying the diff stayed behavior-preserving and the local release-proof commands passed: `cargo fmt --all --check`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo test --all-targets`, and `cargo package --allow-dirty`.
+**Why:** The repo can carry the green local gate baseline forward into CI only if the release-fix slice is proven to preserve observable error/log/feature and submission-path behavior.
+**Note:** `cargo package --allow-dirty` still emits a non-blocking warning that `Cargo.toml` lacks a `description`.
+
+### 2026-05-20T00:16:20.423+02:00: MVP crate docs contract
+**By:** Fry
+**What:** README.md and crate-level rustdoc in `src/lib.rs` must describe only the verified MVP surface: `ExceptionlessClient`, error/log/feature builders, direct async submission, custom server configuration, optional custom transports, the `tokio` runtime requirement used by examples, and `send().await` returning `SubmissionResult`.
+**Why:** The SDK does not yet implement queue workers, offline delivery, settings sync, sessions, plugins, or logging facade integrations, so docs must not imply unsupported behavior or treat disabled mode as a silent no-op.
+**Packaging note:** Published crate metadata should point users to README/docs.rs and exclude repo-only coordination files from the package.
+
+### 2026-05-20T00:16:20.423+02:00: Release artifact and prerelease scaffolding
+**By:** Farnsworth
+**What:** Add a manual `.github/workflows/release.yml` flow that resolves `base_version` from workflow input or `RELEASE_BASE_VERSION`, appends `github.run_number`, rewrites `Cargo.toml` only inside the runner, runs `cargo test` plus `cargo package --allow-dirty`, uploads the `.crate` and `.sha256`, and creates a GitHub prerelease with generated notes.
+**Why:** The team needs an inspectable release artifact path before crates.io publishing exists, without mutating the checked-in package version.
+
 ## Governance
 
 - All meaningful changes require team consensus
