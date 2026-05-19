@@ -163,6 +163,11 @@
 **What:** Add a manual `.github/workflows/release.yml` flow that resolves `base_version` from workflow input or `RELEASE_BASE_VERSION`, appends `github.run_number`, rewrites `Cargo.toml` only inside the runner, runs `cargo test` plus `cargo package --allow-dirty`, uploads the `.crate` and `.sha256`, and creates a GitHub prerelease with generated notes.
 **Why:** The team needs an inspectable release artifact path before crates.io publishing exists, without mutating the checked-in package version.
 
+### 2026-05-20T00:16:20.423+02:00: Publish workflow guardrails
+**By:** Farnsworth
+**What:** The manual crates.io publish path should not publish directly from an arbitrary branch snapshot. It must publish the exact `release_tag` produced by `Release Scaffolding`, reuse the shared base-version-plus-suffix scheme, refresh `Cargo.lock` after the in-runner version rewrite, keep `CARGO_REGISTRY_TOKEN` scoped to the actual publish step, and rely on the `release` environment being restricted to the default branch in GitHub settings.
+**Why:** Publish credentials and release versions both drift silently if the workflow is free to run from branch-specific definitions or from code that no longer matches the scaffolded release tag. Separating dry-run verification from the token-bearing `cargo publish --no-verify` step keeps code execution out of the secret-bearing phase while preserving the existing release scaffold.
+
 ## Governance
 
 - All meaningful changes require team consensus
