@@ -1,0 +1,148 @@
+name: Release Scaffolding
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_version:
+        description: 'Base semver version (defaults to RELEASE_BASE_VERSION)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-release:
+    name: Build release artifact
+    runs-on: ubuntu-latest
+    environment: release
+    env:
+      DEFAULT_RELEASE_BASE_VERSION: 0.1.0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          base_version="${{ inputs.base_version }}"
+
+          if [ -z "$base_version" ]; then
+            base_version="${{ vars.RELEASE_BASE_VERSION }}"
+          fi
+
+          if [ -z "$base_version" ]; then
+            base_version="${DEFAULT_RELEASE_BASE_VERSION}"
+          fi
+
+          if [[ ! "$base_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z][0-9A-Za-z.-]*)?$ ]]; then
+            echo "::error::Base version must look like 0.2.0 or 0.2.0-rc"
+            exit 1
+          fi
+
+          if [[ "$base_version" == *-* ]]; then
+            release_version="${base_version}.${GITHUB_RUN_NUMBER}"
+          else
+            release_version="${base_version}-${GITHUB_RUN_NUMBER}"
+          fi
+
+          tag="v${release_version}"
+
+          {
+            echo "base_version=${base_version}"
+            echo "release_version=${release_version}"
+            echo "tag=${tag}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Apply release version to Cargo.toml
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.release_version }}
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          cargo_toml = Path("Cargo.toml")
+          content = cargo_toml.read_text(encoding="utf-8")
+          updated, count = re.subn(
+              r'(?m)^version\s*=\s*"[^"]+"',
+              f'version = "{os.environ["RELEASE_VERSION"]}"',
+              content,
+              count=1,
+          )
+
+          if count != 1:
+              raise SystemExit("Failed to update Cargo.toml version")
+
+          cargo_toml.write_text(updated, encoding="utf-8")
+          PY
+
+      - name: Validate release package
+        run: |
+          cargo test
+          cargo package --allow-dirty
+
+      - name: Collect packaged artifact
+        id: package
+        shell: bash
+        run: |
+          crate_path="$(find target/package -maxdepth 1 -name '*.crate' | head -n 1)"
+          if [ -z "$crate_path" ]; then
+            echo "::error::No packaged crate artifact was produced"
+            exit 1
+          fi
+
+          checksum_path="${crate_path}.sha256"
+          sha256sum "$crate_path" > "$checksum_path"
+
+          {
+            echo "crate_path=${crate_path}"
+            echo "checksum_path=${checksum_path}"
+            echo "crate_name=$(basename "$crate_path")"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts-${{ steps.version.outputs.release_version }}
+          path: |
+            ${{ steps.package.outputs.crate_path }}
+            ${{ steps.package.outputs.checksum_path }}
+
+      - name: Create prerelease GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "::error::GitHub release $RELEASE_TAG already exists"
+            exit 1
+          fi
+
+          gh release create "$RELEASE_TAG" \
+            --target "$GITHUB_SHA" \
+            --title "$RELEASE_TAG" \
+            --prerelease \
+            --generate-notes
+
+      - name: Attach packaged crate to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          gh release upload "$RELEASE_TAG" \
+            "${{ steps.package.outputs.crate_path }}" \
+            "${{ steps.package.outputs.checksum_path }}"
+
+      - name: Summarize scaffolded release
+        run: |
+          {
+            echo "## Release scaffolding ready"
+            echo
+            echo "- Base version: \`${{ steps.version.outputs.base_version }}\`"
+            echo "- Release version: \`${{ steps.version.outputs.release_version }}\`"
+            echo "- Release tag: \`${{ steps.version.outputs.tag }}\`"
+            echo "- Packaged crate: \`${{ steps.package.outputs.crate_name }}\`"
+            echo "- crates.io publish: intentionally not included in this slice"
+          } >> "$GITHUB_STEP_SUMMARY"

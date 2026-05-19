@@ -209,6 +209,18 @@ cargo run --example error_basic
 
 ---
 
+## Release Scaffolding
+
+Manual release prep lives in GitHub Actions as `Release Scaffolding`.
+
+- Trigger it with `workflow_dispatch`
+- Optionally pass `base_version`, or set `RELEASE_BASE_VERSION` in the `release` environment or repository variables
+- The workflow appends the GitHub run number to the base version to produce a unique pre-release version such as `0.1.0-42`
+- It updates `Cargo.toml` in the runner, runs `cargo test` plus `cargo package --allow-dirty`, uploads the packaged `.crate` and checksum as workflow artifacts, and creates a GitHub prerelease with generated notes
+- It does **not** publish the crate to crates.io in this slice
+
+---
+
 ## License
 
 This project is open source and available under the MIT License
