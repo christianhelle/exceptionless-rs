@@ -2,6 +2,8 @@
 
 A Rust client for [Exceptionless](https://exceptionless.com) — capture errors, logs, and feature usage events with a clean, async-first API.
 
+API docs: [docs.rs/exceptionless](https://docs.rs/exceptionless)
+
 ## What's Supported
 
 This initial release focuses on core event reporting:
@@ -30,6 +32,7 @@ This initial release focuses on core event reporting:
 ```toml
 [dependencies]
 exceptionless = "0.1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 ```
 
 ### 2. Create a Client
@@ -48,9 +51,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+`send().await` returns a `SubmissionResult`. For production code, inspect the result if you need to distinguish success from retryable or discardable responses.
+
 ### 3. Report an Error
 
 ```rust
+use core::num::ParseIntError;
 use exceptionless::ExceptionlessClient;
 
 #[tokio::main]
@@ -120,7 +126,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-Available log levels: `"trace"`, `"debug"`, `"info"`, `"warn"`, `"error"`, `"fatal"`. If not set, the default is `"info"`.
+Common log levels are `"trace"`, `"debug"`, `"info"`, `"warn"`, `"error"`, and `"fatal"`. The client trims surrounding whitespace and omits blank values; it does not validate against a fixed enum yet.
 
 ![Log messages](images/log-messages.png)
 
@@ -188,7 +194,7 @@ let config = ClientConfig::new("YOUR_API_KEY")
     .with_enabled(false);
 ```
 
-When disabled, `send()` will return an error, so tests should either use a test transport or skip submission.
+When disabled, `send()` returns a configuration error before any request is sent, so tests should either use a test transport or skip submission.
 
 ---
 
