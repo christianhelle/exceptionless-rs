@@ -38,3 +38,4 @@ Merged the manual release preparation and publish flows into `.github/workflows/
 ## Team Coordination
 
 - 2026-05-20T10:28:01.000+02:00: Farnsworth's dependency-floor starting point was merged into project decisions and used to keep the first slice limited to the no-risk `thiserror` removal plus the unused `reqwest` `json` feature trim.
+- 2026-05-20T10:28:01.000+02:00: Farnsworth landed commit `b64ddba8548407020ad3bc580f7463f29cf6e553` (`feat(http): gate built-in transport`), proving the second dependency slice by making built-in HTTP opt-in, keeping `reqwest` and `rustls` out of the default dependency graph, and validating both the default and `http` lanes with the full release gates.

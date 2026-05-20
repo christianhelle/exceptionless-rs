@@ -26,6 +26,7 @@
 
 ## Team Coordination
 
+- 2026-05-20T10:28:01.000+02:00: Amy approved Farnsworth's opt-in HTTP boundary slice after re-checking both default and `http` validation lanes, the gated constructor/examples, and the docs requirement that no-`http` consumers provide their own transport.
 - 2026-05-20T10:28:01.000+02:00: Amy approved the first dependency-minimization slice after adding focused regression coverage for error display text and source chaining, and Leela then cleared the final gate on Bender's committed no-risk cut.
 - 2026-05-19T23:03:55.309Z: Amy approved Bender's publish-workflow revision at commit `c5359e0` (`fix(ci): trust scaffolded release tag`). Approval confirmed `publish.yml` now trusts the scaffolded `release_tag`, keeps token exposure scoped to the final publish step, preserves `cargo test --all-targets`, and leaves `release.yml` behavior unchanged. Owner follow-up remains to configure `CARGO_REGISTRY_TOKEN` on the `release` environment and restrict it to the default branch.
 - 2026-05-18T10:43:35.499Z: Test gate proposal merged to decisions.md. Leela confirmed first slice scope. Fry confirmed docs won't block testing. Ready to scaffold test infrastructure when Bender/Farnsworth lay out module structure.

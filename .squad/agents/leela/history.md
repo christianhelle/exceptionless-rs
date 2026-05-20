@@ -21,6 +21,7 @@
 
 ## Team Coordination
 
+- 2026-05-20T10:28:01.000+02:00: Leela cleared the final gate for Farnsworth's opt-in HTTP boundary slice and fixed the next boundary: do not touch `async-trait`, `serde_json`, `chrono`, or broader public-surface reshaping until the next reference-backed seam is mapped.
 - 2026-05-20T10:28:01.000+02:00: Leela approved Bender's first dependency-minimization slice after Amy locked the error-contract regressions, and documented the next slice boundary as opt-in packaging around the built-in HTTP transport.
 - 2026-05-18T10:43:35.499Z: First slice decision merged to decisions.md. Amy agreed test harness needs fake transport + shared submission path. Fry agrees docs tier order decouples README from examples. Ready for Bender/Farnsworth build phase.
 - 2026-05-18T13:54:28Z: Repository renamed from exceptionless.rust to exceptionless-rs. Leela updated GitHub, Cargo.toml, README, and team metadata. Fry updated all documentation references. Commit: fedea6d refactor: rename repository to exceptionless-rs.

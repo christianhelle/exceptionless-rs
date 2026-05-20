@@ -237,6 +237,16 @@
 **What:** APPROVED the first dependency-minimization slice exactly as shipped: direct `thiserror` removal, trimmed unused `reqwest` `json` feature, stable `ConfigError`, `TransportError`, and `ClientError` display and source behavior, and targeted regression coverage for those error contracts. The next slice must stay narrowly on the packaging boundary around built-in HTTP.
 **Why:** This diff stayed inside the no-risk bucket, the local validation bar passed end to end, and there was no evidence-based reason to block the commit once the behavior-locking regressions were in place.
 
+### 2026-05-20T10:28:01.000+02:00: Approve opt-in HTTP boundary slice
+**By:** Amy
+**What:** APPROVED the opt-in HTTP boundary slice after re-checking both the default lane and the `http` feature lane, including doctest coverage and dependency-tree expectations. Keep docs explicit that consumers without the `http` feature must provide their own transport.
+**Why:** Gating built-in HTTP is only safe if lean-core consumers still have a documented path forward and the optional HTTP experience remains fully validated.
+
+### 2026-05-20T10:28:01.000+02:00: Final gate for opt-in HTTP boundary slice
+**By:** Leela
+**What:** APPROVED Farnsworth's built-in HTTP packaging slice exactly as shipped: default-disabled `http` feature, optional `reqwest`, gated `transport::http` and `ExceptionlessClient::with_api_key()`, `url::Url` in core, and validated default plus `http` release lanes. The next slice must not yet touch `async-trait`, `serde_json`, `chrono`, or broader public-surface reshaping.
+**Why:** This lands the biggest default dependency reduction at the package boundary without mixing in deeper API changes before the team maps the next reference-backed seam.
+
 
 ## Governance
 - All meaningful changes require team consensus
