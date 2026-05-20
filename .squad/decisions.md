@@ -202,6 +202,42 @@
 **By:** Fry
 **What:** Updated README release guidance to describe a single `.github/workflows/release.yml` workflow with two manual paths: **Prepare release** and **Publish existing tag**. The docs now state that prepare creates the GitHub prerelease and release artifacts, both paths are restricted to the default branch, and `release_tag` remains the publish source of truth.
 **Why:** Operator-facing docs must match the merged release story without sending users to a deleted standalone publish workflow, while still preserving the existing release guardrails.
+### 2026-05-20T10:28:01.000+02:00: Dependency floor starting point
+**By:** Farnsworth
+**What:** Start dependency reduction with internal-only cuts first: remove the unused `reqwest` `json` feature, then consider replacing direct `thiserror` usage with manual error implementations if the team wants a stricter floor. Treat `reqwest`, `serde_json`, `serde`, `chrono`, `backtrace`, and `async-trait` as locked for now because each one still preserves either the default HTTP path, the JSON payload contract, public wire types, stack-frame behavior, or the public custom-transport seam.
+**Why:** The crate's transport and wire seams are intentionally observable today, so cutting those dependencies without a redesign or feature gate would break downstream custom transports, change event payload types, or degrade shipped MVP behavior.
+
+### 2026-05-20T10:28:01.000+02:00: Dependency audit first slice
+**By:** Bender
+**What:** The smallest safe dependency-reduction slice is to remove direct `thiserror` usage first, then make a separate product and API decision on whether the crate keeps a built-in `reqwest` transport in the default product or feature-gates HTTP transport so `reqwest` can leave the default dependency set.
+**Why:** `thiserror` is internal derive sugar with no user-visible contract, while `reqwest`, `async-trait`, `serde_json`, `chrono`, and `backtrace` are still coupled either to public extension points, the documented default HTTP story, or shipped event behavior.
+
+### 2026-05-20T10:28:01.000+02:00: Dependency reduction proof gate
+**By:** Amy
+**What:** Treat dependency-reduction work as safe only if the plan explicitly preserves or intentionally breaks these consumer-visible contracts: custom transport implementations through `transport::Transport`, `HttpTransport::new(reqwest::Client)` and `HttpTransport::default()`, plus builder `.data(... Into<serde_json::Value>)` calls. Proof must include doctest compilation, example compilation, and the existing payload and config regressions; if transport or response handling changes, add explicit coverage for HTTP response classification and invalid-config and error paths before claiming parity.
+**Why:** The current suite proves the shared submission contract, stack-trace quality, and a few config gates, but it does not by itself prove that swapping or hiding public-facing dependencies is a harmless internal refactor.
+
+### 2026-05-20T10:28:01.000+02:00: Dependency reduction boundary and packaging direction
+**By:** Leela
+**What:** Treat dependency reduction as a boundary decision first, not a crate-swap exercise. The immediate packaging recommendation is to keep one crate and move the built-in HTTP path behind a default-disabled `http` feature if the team proceeds past the no-risk cuts.
+**Why:** `reqwest` drives most of the current runtime footprint, and the present default client surface hardwires that cost through `ExceptionlessClient<T = HttpTransport>`, `ExceptionlessClient::with_api_key`, `transport::http::HttpTransport`, and `ClientConfig::validate()`. A same-crate feature gate removes default HTTP dependency pollution with lower semver and documentation cost than introducing a companion crate immediately.
+
+### 2026-05-20T10:28:01.000+02:00: First no-risk dependency-minimization slice
+**By:** Bender
+**What:** Remove the direct `thiserror` dependency and replace derive usage with manual `Display`, `std::error::Error`, and `From` implementations in `src\config.rs`, `src\error.rs`, and `src\transport\mod.rs`, and remove the unused `reqwest` `json` feature from `Cargo.toml`.
+**Why:** This reduces the direct dependency surface without changing the public API, transport contract, or runtime behavior, and it stays inside the validated no-risk bucket while broader HTTP-boundary decisions remain open.
+
+### 2026-05-20T10:28:01.000+02:00: Approve first dependency cleanup slice
+**By:** Amy
+**What:** APPROVED the slice removing direct `thiserror` usage and trimming the unused `reqwest` `json` feature after focused regression coverage locked `Display` text and `source()` chaining for `ConfigError`, `TransportError`, and `ClientError`.
+**Why:** The slice preserved behavior parity, kept examples compiling, left JSON serialization and parsing on `serde_json`, and cleared the expected local validation bar without widening the transport boundary.
+
+### 2026-05-20T10:28:01.000+02:00: Final gate for first dependency-minimization slice
+**By:** Leela
+**What:** APPROVED the first dependency-minimization slice exactly as shipped: direct `thiserror` removal, trimmed unused `reqwest` `json` feature, stable `ConfigError`, `TransportError`, and `ClientError` display and source behavior, and targeted regression coverage for those error contracts. The next slice must stay narrowly on the packaging boundary around built-in HTTP.
+**Why:** This diff stayed inside the no-risk bucket, the local validation bar passed end to end, and there was no evidence-based reason to block the commit once the behavior-locking regressions were in place.
+
+
 ## Governance
 - All meaningful changes require team consensus
 - Document architectural decisions here
