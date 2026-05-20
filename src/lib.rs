@@ -8,7 +8,7 @@
 //! - Error events with captured stack frames and inner error chaining
 //! - Log events with optional source, level, tags, user identity, version, and custom data
 //! - Feature usage events with tags, user identity, version, and custom data
-//! - Direct async submission to `POST /api/v2/events` when the `http` feature is enabled
+//! - Direct async submission to `POST /api/v2/events` with the default built-in HTTP transport
 //! - Default hosted collector or a custom self-hosted Exceptionless server
 //! - Custom transports through the [`transport::Transport`] trait
 //!
@@ -103,8 +103,9 @@
 //! ```
 //!
 //! Disabling a [`config::ClientConfig`] with [`config::ClientConfig::with_enabled`] causes
-//! submission to fail before the transport is invoked. Without the `http` feature, provide your
-//! own transport implementation with [`ExceptionlessClient::new`].
+//! submission to fail before the transport is invoked. If you build with
+//! `default-features = false`, provide your own transport implementation with
+//! [`ExceptionlessClient::new`].
 pub mod builder;
 pub mod client;
 pub mod config;

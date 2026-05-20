@@ -14,7 +14,7 @@ categories = ["api-bindings", "development-tools::debugging", "web-programming::
 exclude = [".copilot/**", ".github/**", ".squad/**"]
 
 [features]
-default = []
+default = ["http"]
 http = ["dep:reqwest"]
 
 [dependencies]
