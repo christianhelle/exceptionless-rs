@@ -23,8 +23,6 @@
 //! ## Quick start
 //!
 //! ```no_run
-//! # #[cfg(feature = "http")]
-//! # {
 //! use exceptionless::ExceptionlessClient;
 //!
 //! #[tokio::main]
@@ -45,14 +43,11 @@
 //!
 //!     Ok(())
 //! }
-//! # }
 //! ```
 //!
 //! ## Common event builders
 //!
 //! ```no_run
-//! # #[cfg(feature = "http")]
-//! # {
 //! use core::num::ParseIntError;
 //! use exceptionless::ExceptionlessClient;
 //!
@@ -78,14 +73,11 @@
 //!
 //!     Ok(())
 //! }
-//! # }
 //! ```
 //!
 //! ## Custom server configuration
 //!
 //! ```no_run
-//! # #[cfg(feature = "http")]
-//! # {
 //! use exceptionless::ExceptionlessClient;
 //! use exceptionless::config::ClientConfig;
 //! use exceptionless::transport::http::HttpTransport;
@@ -99,13 +91,14 @@
 //!     client.log("self-hosted ready").send().await?;
 //!     Ok(())
 //! }
-//! # }
 //! ```
 //!
-//! Disabling a [`config::ClientConfig`] with [`config::ClientConfig::with_enabled`] causes
-//! submission to fail before the transport is invoked. If you build with
-//! `default-features = false`, provide your own transport implementation with
-//! [`ExceptionlessClient::new`].
+//! The built-in HTTP transport is available in every build. Enabling the `opt-out`
+//! Cargo feature makes `send()` and `submit_batch()` return a no-op success without
+//! invoking the transport, even if the client config is disabled or otherwise
+//! invalid. Without `opt-out`, disabling a [`config::ClientConfig`] with
+//! [`config::ClientConfig::with_enabled`] still causes submission to fail before the
+//! transport is invoked.
 pub mod builder;
 pub mod client;
 pub mod config;

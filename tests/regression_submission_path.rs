@@ -2,16 +2,22 @@ mod support;
 
 use std::{error::Error as StdError, io};
 
+#[cfg(not(feature = "opt-out"))]
+use exceptionless::event::Event;
+#[cfg(feature = "opt-out")]
+use exceptionless::transport::SubmissionAction;
 use exceptionless::{
     ClientError, ExceptionlessClient,
     config::{ClientConfig, ConfigError},
-    event::Event,
     transport::TransportError,
 };
 
-use support::{CapturingTransport, payload_events, test_config};
+use support::CapturingTransport;
+#[cfg(not(feature = "opt-out"))]
+use support::{payload_events, test_config};
 
 #[tokio::test]
+#[cfg(not(feature = "opt-out"))]
 async fn submit_batch_uses_configured_endpoint_and_bearer_token() -> Result<(), Box<dyn StdError>> {
     let transport = CapturingTransport::success();
     let client = ExceptionlessClient::new(
@@ -42,6 +48,7 @@ async fn submit_batch_uses_configured_endpoint_and_bearer_token() -> Result<(), 
 }
 
 #[tokio::test]
+#[cfg(not(feature = "opt-out"))]
 async fn submit_batch_trims_server_url_before_building_endpoint() -> Result<(), Box<dyn StdError>> {
     let transport = CapturingTransport::success();
     let client = ExceptionlessClient::new(
@@ -62,6 +69,7 @@ async fn submit_batch_trims_server_url_before_building_endpoint() -> Result<(), 
 }
 
 #[tokio::test]
+#[cfg(not(feature = "opt-out"))]
 async fn disabled_config_fails_before_transport_submission() {
     let transport = CapturingTransport::success();
     let client = ExceptionlessClient::new(test_config().with_enabled(false), transport.clone());
@@ -80,6 +88,7 @@ async fn disabled_config_fails_before_transport_submission() {
 }
 
 #[tokio::test]
+#[cfg(not(feature = "opt-out"))]
 async fn blank_api_key_fails_before_transport_submission() {
     let transport = CapturingTransport::success();
     let client = ExceptionlessClient::new(
@@ -102,12 +111,56 @@ async fn blank_api_key_fails_before_transport_submission() {
     assert!(transport.requests().is_empty());
 }
 
-#[cfg(feature = "http")]
 #[test]
 fn exceptionless_client_with_api_key_constructor_remains_available() {
     let client = ExceptionlessClient::with_api_key("test-api-key");
 
     assert_eq!(client.config().api_key(), "test-api-key");
+}
+
+#[tokio::test]
+#[cfg(feature = "opt-out")]
+async fn opt_out_feature_returns_success_without_transport_or_config_validation() {
+    let transport = CapturingTransport::success();
+    let client = ExceptionlessClient::new(
+        ClientConfig::new("   ")
+            .with_server_url("https:// bad")
+            .with_enabled(false),
+        transport.clone(),
+    );
+
+    let result = client
+        .feature("blocked")
+        .send()
+        .await
+        .expect("opt-out should short-circuit successfully");
+
+    assert!(result.response.is_success());
+    assert_eq!(result.response.status_code, 202);
+    assert!(transport.requests().is_empty());
+}
+
+#[tokio::test]
+#[cfg(feature = "opt-out")]
+async fn opt_out_submit_batch_empty_batch_returns_synthetic_accepted_without_transport() {
+    let transport = CapturingTransport::success();
+    let client = ExceptionlessClient::new(
+        ClientConfig::new("   ")
+            .with_server_url("https:// bad")
+            .with_enabled(false),
+        transport.clone(),
+    );
+
+    let result = client
+        .submit_batch(Vec::new())
+        .await
+        .expect("opt-out should accept empty batches without validation");
+
+    assert_eq!(result.action, SubmissionAction::Success);
+    assert!(result.response.is_success());
+    assert_eq!(result.response.status_code, 202);
+    assert!(result.response.message.is_none());
+    assert!(transport.requests().is_empty());
 }
 
 #[test]
