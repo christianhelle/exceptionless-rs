@@ -248,6 +248,67 @@
 **Why:** This lands the biggest default dependency reduction at the package boundary without mixing in deeper API changes before the team maps the next reference-backed seam.
 
 
+### 2026-05-20T11:59:35.339+02:00: Approve default-enabled HTTP transport slice
+**By:** Amy
+**What:** Approve Farnsworth's opt-out telemetry/default-enabled transport slice.
+**Why:** The diff stays disciplined to packaging and docs: `Cargo.toml` now defaults `http`, while `README.md` and `src/lib.rs` consistently explain the new default path and the lean-core opt-out via `default-features = false`. Revalidation passed in the default lane, lean-core no-default-features lane, explicit `http` lane, and doctest coverage, and the no-default-features dependency tree still excludes `reqwest`/TLS transport baggage.
+**Impact:**
+- Default consumers keep the ergonomic `ExceptionlessClient::with_api_key(...)` path without adding features manually.
+- Opt-out consumers can still build the lean core and supply a custom transport.
+- No blocking follow-up remains for this slice beyond carrying the same validation matrix into final gate review.
+
+### 2026-05-20T11:59:35.339+02:00: User directive
+**By:** Christian Helle (via Copilot)
+**What:** Prefer opt-out telemetry over opt-in `http`; if feasible, make built-in transport enabled by default and let consumers opt out.
+**Why:** User request — captured for team memory
+
+### 2026-05-20T11:59:35.339+02:00: HTTP default opt-out direction
+**By:** Farnsworth
+**What:** Flip the packaging slice to make the existing `http` feature part of `default` instead of renaming or removing it.
+**Why:** This keeps the current transport gate and optional `reqwest` dependency model intact while restoring the documented built-in HTTP experience for default consumers. Opt-out consumers still get the lean core by building with `default-features = false`, which removes `reqwest` and `rustls` from the normal dependency tree without touching the transport trait or wire contract.
+**Impact:**
+- Default builds now include `transport::http::HttpTransport` and `ExceptionlessClient::with_api_key(...)`.
+- Lean-core consumers must switch from doing nothing to explicitly using `default-features = false`.
+- Existing explicit `features = ["http"]` requests remain valid but become redundant.
+
+### 2026-05-20T11:59:35.339+02:00: Final gate for default-enabled HTTP transport slice
+**By:** Leela
+**What:** APPROVE Farnsworth's opt-out telemetry/default-enabled transport slice exactly as-is.
+**Why:** The change stays inside the packaging boundary: `Cargo.toml` restores the default built-in HTTP path, while `README.md` and `src/lib.rs` now consistently explain that lean-core consumers must opt out with `default-features = false`. The validation bar passed across the default lane, explicit `http` lane, no-default-features lane, doctests, and example compilation, with the lean-core dependency tree still excluding `reqwest` and TLS baggage.
+**Impact:**
+- The crate regains the zero-config `ExceptionlessClient::with_api_key(...)` onboarding path in the default build.
+- Lean-core consumers still have an explicit escape hatch that preserves the custom transport seam.
+- Next boundary stays tight: do not touch `async-trait`, `serde_json`, `chrono`, or broader public API reshaping until the team maps the next .NET-backed seam for public dependency reduction.
+
+### 2026-05-20T13:00:42.108+02:00: User directive
+**By:** Christian Helle (via Copilot)
+**What:** The intended feature model is an `opt-out` feature whose enabled state disables telemetry collection.
+**Why:** User request — captured for team memory
+
+### 2026-05-20T13:00:42.108+02:00: Single `opt-out` feature tradeoff
+**By:** Farnsworth
+**What:** To keep `ExceptionlessClient::with_api_key(...)` and `transport::http::HttpTransport` available while exposing only one consumer-facing Cargo feature, the crate now treats `reqwest` as an unconditional dependency and uses `opt-out` only to short-circuit submission to a synthetic success result.
+**Why:** This preserves the transport-facing API shape, but it removes the previous lean-core packaging split: `--no-default-features` no longer drops the built-in HTTP dependency graph.
+
+### 2026-05-20T13:00:42.108+02:00: Reject first single `opt-out` feature revision
+**By:** Amy
+**What:** REJECTED Farnsworth's single `opt-out` feature slice because `README.md` and `src/lib.rs` still overstated disabled-client behavior under `opt-out`, and there was no direct regression proving `submit_batch()` itself returned the same synthetic accepted success without transport calls. Revision ownership moved to Bender.
+**Why:** The single-feature model is only safe to ship if docs tell the truth about the synthetic no-op success path and direct `submit_batch()` coverage proves the short-circuit wins even on the empty-batch edge.
+
+### 2026-05-20T13:00:42.108+02:00: Approve revised single `opt-out` feature slice
+**By:** Amy
+**What:** APPROVED Bender's revision after `README.md` and `src/lib.rs` made the disabled-config behavior explicitly conditional on `opt-out`, and `tests/regression_submission_path.rs` added direct opt-out coverage for both builder `send()` and empty-batch `submit_batch()` synthetic 202 success.
+**Why:** The revision closes the exact review blockers without widening scope, and the validation proof stayed green in normal, doctest, and `opt-out` lanes.
+
+### 2026-05-20T13:00:42.108+02:00: Final gate for single `opt-out` feature revision
+**By:** Leela
+**What:** APPROVED the narrow revision slice exactly as-is: `README.md`, `src/lib.rs`, and `tests/regression_submission_path.rs` now align with the already-implemented single `opt-out` feature model, including direct `submit_batch()` no-op success coverage.
+**Why:** The revision fixes the exact review findings without widening scope. Docs now truthfully state that the built-in HTTP transport and `ExceptionlessClient::with_api_key(...)` stay available in every build while `opt-out` short-circuits submission to a synthetic success, and the regression proof covers that behavior on both `send()` and `submit_batch()`.
+**Impact:**
+- Ready to commit exactly as-is.
+- Validation rechecked with `cargo test --test regression_submission_path`, `cargo test --test regression_submission_path --features opt-out`, `cargo test --doc`, `cargo test --all-targets`, and `cargo test --all-targets --features opt-out`.
+- No blocking follow-up remains for the overall single-feature `opt-out` work.
+
 ## Governance
 - All meaningful changes require team consensus
 - Document architectural decisions here

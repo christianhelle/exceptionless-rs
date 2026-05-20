@@ -7,6 +7,7 @@
 
 ## Learnings
 
+- 2026-05-20T11:59:35.339+02:00: When the owner prefers opt-out telemetry over opt-in HTTP, the package boundary can flip back to default-enabled `http` as long as the feature remains the opt-out seam and the lean-core `--no-default-features` proof stays green.
 - 2026-05-20T10:28:01.000+02:00: After the no-risk `thiserror` and `reqwest`-feature cleanup lands, the next dependency-minimization move must stay narrowly on the packaging boundary around built-in HTTP so the team does not mix transport gating with `serde_json`, `chrono`, or public builder API changes.
 - 2026-05-19T23:57:10.867+02:00: Release readiness plan drafted. Identified 10 key ambiguities (MSRV, edition, token provisioning, semver strategy, cross-platform testing, docs site, changelog automation, approval gates, edition 2024 validation, dependency constraints). Proposed 7 slices across 3 phases: Phase 1 (test/docs/audit) is critical path, Phase 2 (version/publish) unblocks crates.io, Phase 3 (notify/security) deferred. Total 12–14 days with parallelization. Owner input required on all ambiguities before Slice 1a begins.
 - 2026-05-18T10:43:35.499+02:00: Team initialized. Start with a greenfield Rust SDK and audit the .NET client before hardening public APIs.
@@ -21,7 +22,9 @@
 
 ## Team Coordination
 
+- 2026-05-20T11:59:35.339+02:00: Leela cleared the final gate for Farnsworth's default-enabled transport slice and kept the next dependency-reduction boundary away from `async-trait`, `serde_json`, `chrono`, and broader public-surface reshaping.
 - 2026-05-20T10:28:01.000+02:00: Leela cleared the final gate for Farnsworth's opt-in HTTP boundary slice and fixed the next boundary: do not touch `async-trait`, `serde_json`, `chrono`, or broader public-surface reshaping until the next reference-backed seam is mapped.
 - 2026-05-20T10:28:01.000+02:00: Leela approved Bender's first dependency-minimization slice after Amy locked the error-contract regressions, and documented the next slice boundary as opt-in packaging around the built-in HTTP transport.
 - 2026-05-18T10:43:35.499Z: First slice decision merged to decisions.md. Amy agreed test harness needs fake transport + shared submission path. Fry agrees docs tier order decouples README from examples. Ready for Bender/Farnsworth build phase.
 - 2026-05-18T13:54:28Z: Repository renamed from exceptionless.rust to exceptionless-rs. Leela updated GitHub, Cargo.toml, README, and team metadata. Fry updated all documentation references. Commit: fedea6d refactor: rename repository to exceptionless-rs.
+- 2026-05-20T13:00:42.108+02:00: Leela approved Bender's revised single `opt-out` feature slice as commit-ready after the docs truthfully described the synthetic no-op success path and direct `submit_batch()` opt-out coverage closed Amy's blockers.

@@ -36,3 +36,6 @@ Amy approved commit `c5359e0` (`fix(ci): trust scaffolded release tag`). The pub
 **Scribe Team Update:**
 Committed the first dependency-minimization slice as `12ee13024d03cecf53de3f72918f4665fff8e82c` (`refactor: remove thiserror and trim reqwest features`). Amy approved the change after adding focused error-contract regressions, and Leela cleared the final gate with the next slice constrained to the built-in HTTP packaging boundary.
 
+## 2026-05-20T13:00:42.108+02:00
+**Scribe Team Update:**
+Bender revised Amy's rejected single `opt-out` feature slice under reviewer lockout, fixed `README.md`, `src/lib.rs`, and `tests/regression_submission_path.rs`, and committed the approved revision as `87393f6f063b5a9767f63681ff452eef5117917b` (`feat: add opt-out submission coverage`).
