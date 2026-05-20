@@ -1,24 +1,51 @@
-name: Release Scaffolding
+name: Release
 
 on:
   workflow_dispatch:
     inputs:
+      action:
+        description: 'Manual release action to run'
+        required: true
+        default: prepare-release
+        type: choice
+        options:
+          - prepare-release
+          - publish-existing-tag
       base_version:
-        description: 'Base semver version (defaults to RELEASE_BASE_VERSION)'
+        description: 'Base semver version for release preparation (defaults to RELEASE_BASE_VERSION)'
+        required: false
+        type: string
+      release_tag:
+        description: 'Existing prerelease tag to publish (required for publish-existing-tag)'
         required: false
         type: string
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   prepare-release:
+    if: ${{ inputs.action == 'prepare-release' }}
     name: Build release artifact
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     environment: release
+    concurrency:
+      group: release-prepare-${{ github.event.repository.default_branch }}-${{ inputs.base_version || vars.RELEASE_BASE_VERSION || '0.1.0' }}
+      cancel-in-progress: false
     env:
       DEFAULT_RELEASE_BASE_VERSION: 0.1.0
     steps:
+      - name: Validate release ref
+        shell: bash
+        run: |
+          expected_ref="refs/heads/${{ github.event.repository.default_branch }}"
+          if [ "${GITHUB_REF}" != "${expected_ref}" ]; then
+            echo "::error::Release preparation must run from ${expected_ref}"
+            exit 1
+          fi
+
       - uses: actions/checkout@v4
 
       - name: Resolve release version
@@ -145,4 +172,113 @@ jobs:
             echo "- Release tag: \`${{ steps.version.outputs.tag }}\`"
             echo "- Packaged crate: \`${{ steps.package.outputs.crate_name }}\`"
             echo "- crates.io publish: intentionally not included in this slice"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  publish:
+    if: ${{ inputs.action == 'publish-existing-tag' }}
+    name: Publish crate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    environment: release
+    concurrency:
+      group: release-publish-${{ inputs.release_tag }}
+      cancel-in-progress: false
+    steps:
+      - name: Validate publish inputs and ref
+        shell: bash
+        run: |
+          release_tag="${{ inputs.release_tag }}"
+          if [ -z "${release_tag}" ]; then
+            echo "::error::release_tag is required when action is publish-existing-tag"
+            exit 1
+          fi
+
+          expected_ref="refs/heads/${{ github.event.repository.default_branch }}"
+          if [ "${GITHUB_REF}" != "${expected_ref}" ]; then
+            echo "::error::Publish workflow must run from ${expected_ref}"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag }}
+
+      - name: Install stable Rust toolchain
+        uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8
+
+      - name: Cache Cargo artifacts
+        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32
+
+      - name: Resolve publish version
+        id: version
+        shell: bash
+        run: |
+          release_tag="${{ inputs.release_tag }}"
+
+          if [[ ! "$release_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z][0-9A-Za-z.-]*)?$ ]]; then
+            echo "::error::release_tag must look like v0.2.0-42 or v0.2.0-rc.42"
+            exit 1
+          fi
+
+          publish_version="${release_tag#v}"
+
+          {
+            echo "release_tag=${release_tag}"
+            echo "publish_version=${publish_version}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Apply publish version to Cargo.toml
+        env:
+          PUBLISH_VERSION: ${{ steps.version.outputs.publish_version }}
+        run: |
+          python - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          cargo_toml = Path("Cargo.toml")
+          content = cargo_toml.read_text(encoding="utf-8")
+          updated, count = re.subn(
+              r'(?m)^version\s*=\s*"[^"]+"',
+              f'version = "{os.environ["PUBLISH_VERSION"]}"',
+              content,
+              count=1,
+          )
+
+          if count != 1:
+              raise SystemExit("Failed to update Cargo.toml version")
+
+          cargo_toml.write_text(updated, encoding="utf-8")
+          PY
+
+      - name: Refresh Cargo.lock for publish version
+        run: cargo generate-lockfile
+
+      - name: Run publish validation
+        run: cargo test --all-targets
+
+      - name: Dry-run crates.io publish
+        run: cargo publish --dry-run --locked --allow-dirty
+
+      - name: Publish crate to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        shell: bash
+        run: |
+          if [ -z "${CARGO_REGISTRY_TOKEN}" ]; then
+            echo "::error::CARGO_REGISTRY_TOKEN secret is not configured for the release environment"
+            exit 1
+          fi
+
+          cargo publish --locked --allow-dirty --no-verify
+
+      - name: Summarize publish
+        run: |
+          {
+            echo "## crates.io publish complete"
+            echo
+            echo "- Release tag: \`${{ steps.version.outputs.release_tag }}\`"
+            echo "- Published version: \`${{ steps.version.outputs.publish_version }}\`"
+            echo "- Registry secret: \`CARGO_REGISTRY_TOKEN\` from the \`release\` environment"
           } >> "$GITHUB_STEP_SUMMARY"

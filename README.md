@@ -215,22 +215,23 @@ cargo run --example error_basic
 
 ---
 
-## Release Workflows
+## Release Workflow
 
-Manual release prep lives in GitHub Actions as `Release Scaffolding`.
+Manual release work lives in `.github/workflows/release.yml`. It offers two manual paths—**Prepare release** and **Publish existing tag**—and both are restricted to the repository default branch.
 
-- Trigger it with `workflow_dispatch`
-- Optionally pass `base_version`, or set `RELEASE_BASE_VERSION` in the `release` environment or repository variables
-- The workflow appends the GitHub run number to the base version to produce a unique pre-release version such as `0.1.0-42`
-- It updates `Cargo.toml` in the runner, runs `cargo test` plus `cargo package --allow-dirty`, uploads the packaged `.crate` and checksum as workflow artifacts, and creates a GitHub prerelease with generated notes
+**Prepare release**
 
-Manual crates.io publishing now lives in GitHub Actions as `Publish to crates.io`.
+- Optionally provide `base_version`; otherwise the workflow falls back to `RELEASE_BASE_VERSION` and then its local default
+- Append the GitHub run number to create a unique prerelease tag such as `v0.1.0-42`
+- Rewrite `Cargo.toml` in the runner, run `cargo test` plus `cargo package --allow-dirty`, upload the `.crate` and `.sha256`, and create the GitHub prerelease with generated notes
+- Treat the resulting `release_tag` as the source of truth for any later publish run
 
-- Trigger it with `workflow_dispatch`
-- Pass the `release_tag` created by `Release Scaffolding`; the workflow checks out that exact tag and treats it as the source of truth for the publish version
-- Configure the crates.io token as the `CARGO_REGISTRY_TOKEN` secret in the `release` environment, and restrict that environment to the repository default branch in GitHub so arbitrary refs cannot use the publish secret
-- The workflow runs `cargo test --all-targets`, then `cargo publish --dry-run --locked --allow-dirty`, then `cargo publish --locked --allow-dirty --no-verify`
-- It publishes to crates.io only; it does not create or modify the GitHub prerelease
+**Publish existing tag**
+
+- Provide the `release_tag` from a previous prepare run
+- Check out that exact tag, refresh the in-runner package version from `release_tag`, and publish that version only
+- Run `cargo test --all-targets`, `cargo publish --dry-run --locked --allow-dirty`, then `cargo publish --locked --allow-dirty --no-verify`
+- Store `CARGO_REGISTRY_TOKEN` in the `release` environment and keep that environment restricted to the default branch
 
 ---
 
