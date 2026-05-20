@@ -43,3 +43,6 @@ jobs:
 
       - name: Validate package
         run: cargo package --allow-dirty
+
+      - name: Publish (dry-run)
+        run: cargo publish --dry-run --allow-dirty
