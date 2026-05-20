@@ -7,15 +7,27 @@ use crate::{
     event::Event,
     feature::FeatureUsageBuilder,
     log::LogEventBuilder,
-    transport::{SubmissionRequest, SubmissionResult, Transport, http::HttpTransport},
+    transport::{SubmissionRequest, SubmissionResult, Transport},
 };
 
+#[cfg(feature = "http")]
+use crate::transport::http::HttpTransport;
+
+#[cfg(feature = "http")]
 #[derive(Debug, Clone)]
 pub struct ExceptionlessClient<T: Transport = HttpTransport> {
     config: ClientConfig,
     transport: T,
 }
 
+#[cfg(not(feature = "http"))]
+#[derive(Debug, Clone)]
+pub struct ExceptionlessClient<T: Transport> {
+    config: ClientConfig,
+    transport: T,
+}
+
+#[cfg(feature = "http")]
 impl ExceptionlessClient<HttpTransport> {
     pub fn with_api_key(api_key: impl Into<String>) -> Self {
         Self::new(ClientConfig::new(api_key), HttpTransport::default())

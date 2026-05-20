@@ -12,7 +12,7 @@ This initial release focuses on core event reporting:
 - **Log events** — send structured logs with severity levels
 - **Feature tracking** — record feature usage for analytics
 - **Custom metadata** — add tags, user identity, version, and arbitrary data to any event
-- **Async/await** — all submission is non-blocking; built on `async-trait` and `reqwest`
+- **Async/await** — all submission is non-blocking; the built-in HTTP transport is available behind the optional `http` feature and uses `reqwest`
 - **Bearer authentication** — events submitted with your API key to `collector.exceptionless.io` (or a custom server)
 
 ### Not Yet Supported
@@ -31,9 +31,11 @@ This initial release focuses on core event reporting:
 
 ```toml
 [dependencies]
-exceptionless = "0.1"
+exceptionless = { version = "0.1", features = ["http"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 ```
+
+The crate core can also be used without the `http` feature when you want to supply your own transport implementation.
 
 ### 2. Create a Client
 
@@ -185,6 +187,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+`exceptionless::transport::http::HttpTransport` and `ExceptionlessClient::with_api_key(...)` are available only when the `http` feature is enabled.
+
 ### Disable the Client
 
 For local development or testing, you can disable event submission:
@@ -210,7 +214,7 @@ See the `examples/` directory for runnable patterns:
 Run any example with:
 
 ```bash
-cargo run --example error_basic
+cargo run --example error_basic --features http
 ```
 
 ---

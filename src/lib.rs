@@ -8,7 +8,7 @@
 //! - Error events with captured stack frames and inner error chaining
 //! - Log events with optional source, level, tags, user identity, version, and custom data
 //! - Feature usage events with tags, user identity, version, and custom data
-//! - Direct async submission to `POST /api/v2/events`
+//! - Direct async submission to `POST /api/v2/events` when the `http` feature is enabled
 //! - Default hosted collector or a custom self-hosted Exceptionless server
 //! - Custom transports through the [`transport::Transport`] trait
 //!
@@ -23,6 +23,8 @@
 //! ## Quick start
 //!
 //! ```no_run
+//! # #[cfg(feature = "http")]
+//! # {
 //! use exceptionless::ExceptionlessClient;
 //!
 //! #[tokio::main]
@@ -43,11 +45,14 @@
 //!
 //!     Ok(())
 //! }
+//! # }
 //! ```
 //!
 //! ## Common event builders
 //!
 //! ```no_run
+//! # #[cfg(feature = "http")]
+//! # {
 //! use core::num::ParseIntError;
 //! use exceptionless::ExceptionlessClient;
 //!
@@ -73,11 +78,14 @@
 //!
 //!     Ok(())
 //! }
+//! # }
 //! ```
 //!
 //! ## Custom server configuration
 //!
 //! ```no_run
+//! # #[cfg(feature = "http")]
+//! # {
 //! use exceptionless::ExceptionlessClient;
 //! use exceptionless::config::ClientConfig;
 //! use exceptionless::transport::http::HttpTransport;
@@ -91,10 +99,12 @@
 //!     client.log("self-hosted ready").send().await?;
 //!     Ok(())
 //! }
+//! # }
 //! ```
 //!
 //! Disabling a [`config::ClientConfig`] with [`config::ClientConfig::with_enabled`] causes
-//! submission to fail before the transport is invoked.
+//! submission to fail before the transport is invoked. Without the `http` feature, provide your
+//! own transport implementation with [`ExceptionlessClient::new`].
 pub mod builder;
 pub mod client;
 pub mod config;

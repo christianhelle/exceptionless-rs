@@ -1,5 +1,7 @@
 use std::{error::Error as StdError, fmt};
 
+use url::Url;
+
 pub const DEFAULT_SERVER_URL: &str = "https://collector.exceptionless.io";
 pub const EVENTS_API_PATH: &str = "/api/v2/events";
 
@@ -54,7 +56,7 @@ impl ClientConfig {
             return Err(ConfigError::MissingApiKey);
         }
 
-        reqwest::Url::parse(self.normalized_server_url())
+        Url::parse(self.normalized_server_url())
             .map_err(|_| ConfigError::InvalidServerUrl(self.server_url.clone()))?;
 
         Ok(())

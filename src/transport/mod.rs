@@ -1,5 +1,6 @@
 use std::{error::Error as StdError, fmt};
 
+#[cfg(feature = "http")]
 pub mod http;
 pub mod response;
 

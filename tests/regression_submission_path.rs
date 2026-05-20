@@ -102,6 +102,7 @@ async fn blank_api_key_fails_before_transport_submission() {
     assert!(transport.requests().is_empty());
 }
 
+#[cfg(feature = "http")]
 #[test]
 fn exceptionless_client_with_api_key_constructor_remains_available() {
     let client = ExceptionlessClient::with_api_key("test-api-key");
