@@ -43,6 +43,8 @@ exceptionless = { version = "0.1", features = ["opt-out"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 ```
 
+Opting out of telemetry data collection is a common requirement for local development and testing. With `opt-out` enabled, all calls to `.send().await?` and `submit_batch(...).await?` succeed without sending any data, so you can keep the same code paths without needing test-specific configuration or transports.
+
 ### 2. Create a Client
 
 The simplest way to get started:
