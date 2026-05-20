@@ -14,14 +14,14 @@ categories = ["api-bindings", "development-tools::debugging", "web-programming::
 exclude = [".copilot/**", ".github/**", ".squad/**"]
 
 [features]
-default = ["http"]
-http = ["dep:reqwest"]
+default = []
+opt-out = []
 
 [dependencies]
 async-trait = "0.1"
 backtrace = "0.3"
 chrono = { version = "0.4", features = ["serde"] }
-reqwest = { version = "0.12", optional = true, default-features = false, features = [
+reqwest = { version = "0.12", default-features = false, features = [
   "rustls-tls",
 ] }
 serde = { version = "1", features = ["derive"] }
@@ -33,16 +33,12 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 
 [[example]]
 name = "error_basic"
-required-features = ["http"]
 
 [[example]]
 name = "log_structured"
-required-features = ["http"]
 
 [[example]]
 name = "feature_track"
-required-features = ["http"]
 
 [[example]]
 name = "config_custom"
-required-features = ["http"]

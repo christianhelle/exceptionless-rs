@@ -1,3 +1,5 @@
+#![cfg(not(feature = "opt-out"))]
+
 mod support;
 
 use core::num::ParseIntError;

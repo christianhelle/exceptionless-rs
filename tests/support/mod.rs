@@ -1,12 +1,12 @@
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use exceptionless::{
-    config::ClientConfig,
-    transport::{
-        SubmissionRequest, SubmissionResult, Transport, TransportError, TransportResponse,
-    },
+#[cfg(not(feature = "opt-out"))]
+use exceptionless::config::ClientConfig;
+use exceptionless::transport::{
+    SubmissionRequest, SubmissionResult, Transport, TransportError, TransportResponse,
 };
+#[cfg(not(feature = "opt-out"))]
 use serde_json::Value;
 
 #[derive(Debug, Clone)]
@@ -45,10 +45,12 @@ impl Transport for CapturingTransport {
     }
 }
 
+#[cfg(not(feature = "opt-out"))]
 pub fn test_config() -> ClientConfig {
     ClientConfig::new("test-api-key").with_server_url("https://example.com")
 }
 
+#[cfg(not(feature = "opt-out"))]
 pub fn payload_events(request: &SubmissionRequest) -> Vec<Value> {
     serde_json::from_str(&request.payload).expect("request payload should be valid json")
 }

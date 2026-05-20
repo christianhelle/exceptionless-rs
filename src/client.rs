@@ -7,31 +7,30 @@ use crate::{
     event::Event,
     feature::FeatureUsageBuilder,
     log::LogEventBuilder,
-    transport::{SubmissionRequest, SubmissionResult, Transport},
+    transport::{SubmissionResult, Transport},
 };
 
-#[cfg(feature = "http")]
+#[cfg(not(feature = "opt-out"))]
+use crate::transport::SubmissionRequest;
+#[cfg(feature = "opt-out")]
+use crate::transport::TransportResponse;
 use crate::transport::http::HttpTransport;
 
-#[cfg(feature = "http")]
 #[derive(Debug, Clone)]
 pub struct ExceptionlessClient<T: Transport = HttpTransport> {
     config: ClientConfig,
     transport: T,
 }
 
-#[cfg(not(feature = "http"))]
-#[derive(Debug, Clone)]
-pub struct ExceptionlessClient<T: Transport> {
-    config: ClientConfig,
-    transport: T,
-}
-
-#[cfg(feature = "http")]
 impl ExceptionlessClient<HttpTransport> {
     pub fn with_api_key(api_key: impl Into<String>) -> Self {
         Self::new(ClientConfig::new(api_key), HttpTransport::default())
     }
+}
+
+#[cfg(feature = "opt-out")]
+fn opt_out_submission_result() -> SubmissionResult {
+    SubmissionResult::from_response(TransportResponse::new(202, None))
 }
 
 impl<T: Transport> ExceptionlessClient<T> {
@@ -70,15 +69,24 @@ impl<T: Transport> ExceptionlessClient<T> {
     where
         I: IntoIterator<Item = Event>,
     {
-        let events: Vec<_> = events.into_iter().map(Event::into_wire).collect();
-        if events.is_empty() {
-            return Err(ClientError::EmptyBatch);
+        #[cfg(feature = "opt-out")]
+        {
+            let _ = events.into_iter();
+            return Ok(opt_out_submission_result());
         }
 
-        let request = SubmissionRequest::from_events(&self.config, &events)?;
-        self.transport
-            .submit_events(request)
-            .await
-            .map_err(ClientError::from)
+        #[cfg(not(feature = "opt-out"))]
+        {
+            let events: Vec<_> = events.into_iter().map(Event::into_wire).collect();
+            if events.is_empty() {
+                return Err(ClientError::EmptyBatch);
+            }
+
+            let request = SubmissionRequest::from_events(&self.config, &events)?;
+            self.transport
+                .submit_events(request)
+                .await
+                .map_err(ClientError::from)
+        }
     }
 }

@@ -68,6 +68,7 @@ impl Event {
         self
     }
 
+    #[cfg(not(feature = "opt-out"))]
     pub(crate) fn into_wire(self) -> wire_event::Event {
         self.inner
     }
