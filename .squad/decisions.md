@@ -183,6 +183,25 @@
 **What:** Keep optional hardening independent from the locked release/publish path by adding a separate dependency-audit workflow instead of editing `publish.yml`, `release.yml`, or README release guidance.
 **Why:** Reviewer lockout on the publish artifact means release-path edits are no longer safe to carry in this slice. A standalone `cargo audit` workflow still adds value by catching RustSec advisories on dependency changes and on a weekly cadence.
 
+### 2026-05-20T14:53:27.948+02:00: Workflow merge guardrails
+**By:** Amy
+**What:** Preserve the release-automation contract while merging the standalone publish workflow into the manual release flow: keep `ci.yml` as the automatic push/PR validation workflow with its existing concurrency guard and validation sequence, keep prerelease creation in `release.yml`, ensure the publish path continues to trust `release_tag` as the publish source of truth, and keep `CARGO_REGISTRY_TOKEN` scoped only to the final publish step.
+**Why:** This slice touched CI, release scaffolding, publish automation, and operator docs at once, so the highest regression risk was contract drift between files or a cleanup that silently weakened release safety.
+
+### 2026-05-20T14:53:27.948+02:00: Approve merged release workflow slice
+**By:** Amy
+**What:** APPROVED the merged `.github/workflows/release.yml` plus `README.md` update and removal of `.github/workflows/publish.yml`. The single workflow now carries the prepare and publish manual paths, keeps prerelease creation in the prepare path, restricts both paths to the default branch, treats `release_tag` as the publish version source of truth, preserves `cargo generate-lockfile`, `cargo test --all-targets`, and `cargo publish --dry-run --locked --allow-dirty`, and still scopes `CARGO_REGISTRY_TOKEN` only to the final publish step.
+**Why:** The merge preserves the previously approved release and publish contracts while removing duplicated workflow surface and keeping operator documentation aligned with the actual release path.
+
+### 2026-05-20T14:53:27.948+02:00: Merge manual release and publish workflows
+**By:** Farnsworth
+**What:** Merged the manual release preparation and publish flows into `.github/workflows/release.yml` behind a required `action` workflow dispatch choice, kept `release_tag` as the publish source of truth for checkout and version derivation, and added explicit default-branch guards to both manual paths.
+**Why:** One workflow removes duplicated release automation while preserving prerelease creation, publish identity, and the branch restrictions that protect the `release` environment.
+
+### 2026-05-20T14:53:27.948+02:00: README release workflow wording after merge
+**By:** Fry
+**What:** Updated README release guidance to describe a single `.github/workflows/release.yml` workflow with two manual paths: **Prepare release** and **Publish existing tag**. The docs now state that prepare creates the GitHub prerelease and release artifacts, both paths are restricted to the default branch, and `release_tag` remains the publish source of truth.
+**Why:** Operator-facing docs must match the merged release story without sending users to a deleted standalone publish workflow, while still preserving the existing release guardrails.
 ## Governance
 - All meaningful changes require team consensus
 - Document architectural decisions here

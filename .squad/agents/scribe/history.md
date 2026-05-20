@@ -18,3 +18,5 @@ Agent Scribe initialized and ready for work.
 - 2026-05-20T01:03:55.309+02:00: Final batch closure should record both the approved implementation state and any superseded inbox items that were dropped during dedupe so the team log explains why only the final decision set reached `decisions.md`.
 Initial setup complete.
 - Session close work should record decision-inbox merges, per-agent orchestration logs, and a compact health report for continuity.
+
+📌 2026-05-20T12:53:27.948Z: Closed the release-workflow-merge batch: decisions inbox merged, three orchestration logs written for Amy/Farnsworth/Fry, affected histories refreshed, and health metrics captured with no archive or history summarization required.

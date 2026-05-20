@@ -7,6 +7,7 @@
 
 ## Learnings
 
+- 2026-05-20T14:53:27.948+02:00: The release automation can stay in one `release.yml` without losing safety if `workflow_dispatch` switches between `prepare-release` and `publish-existing-tag`, both paths fail off the default branch, release prep keeps the GitHub prerelease step, and publish serializes by `release_tag` while scoping `CARGO_REGISTRY_TOKEN` to the final `cargo publish`.
 - 2026-05-20T01:03:55.309+02:00: When release/publish workflow files are reviewer-locked, optional hardening can still ship safely as independent GitHub Actions work; a standalone dependency-audit workflow adds value without reopening the approved publish artifact.
 - 2026-05-18T10:43:35.499+02:00: Audit the .NET client early to capture transport, buffering, and payload-shaping behavior before implementation spreads.
 - 2026-05-18T10:43:35.499+02:00: First transport slice uses `ClientConfig -> SubmissionRequest -> Transport` so tests can fake transport while asserting exact endpoint/auth/payload wire fields.
@@ -25,3 +26,9 @@ Delivered transport MVP contract with fakeable Transport trait, SubmissionReques
 ## 2026-05-19T23:03:55.309Z
 **Scribe Team Update:**
 Completed optional hardening independently under lockout with commit `e1bc409` (`ci: add dependency audit`). The release/publish workflow files stayed untouched, and owner follow-up remains to configure `CARGO_REGISTRY_TOKEN` on the `release` environment and restrict that environment to the default branch.
+
+- 2026-05-20T14:53:27.948+02:00: Release automation can safely live in one `.github/workflows/release.yml` when `workflow_dispatch` switches between prepare and publish actions, both paths fail outside the default branch, `release_tag` remains the publish source of truth, and `CARGO_REGISTRY_TOKEN` stays scoped to the final publish step.
+
+## 2026-05-20T12:53:27.948Z
+**Scribe Team Update:**
+Merged the manual release preparation and publish flows into `.github/workflows/release.yml` in commit `2bdfb5d` (`fix(ci): merge release workflow`). The slice removed `.github/workflows/publish.yml` while preserving default-branch guards, `release_tag` publish identity, publish validation guardrails, and final-step token scoping.

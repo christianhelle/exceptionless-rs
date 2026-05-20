@@ -17,6 +17,7 @@
 - 2026-05-19T23:57:10.867+02:00: Completed crates.io & docs readiness audit. Found: edition "2024" is invalid (blocker); missing Cargo.toml fields (description, categories, keywords); no crate-level lib.rs docs; no CHANGELOG.md; missing CONTRIBUTING.md, SECURITY.md. README quality good, examples solid. Audit saved to AUDIT_CRATES_IO_READINESS.md with prioritized fix list (blockers first, then pre-release, then optional post-release).
 - 2026-05-20T00:16:20.423+02:00: Crates.io/docs slice shipped in `Cargo.toml`, `README.md`, and `src/lib.rs`. Package metadata now includes description/docs/homepage/readme/keywords/categories plus packaging excludes for `.copilot`, `.github`, `.squad`, `plan.md`, and the audit note; `cargo package --allow-dirty` dropped package contents from 175 files to 40.
 - 2026-05-20T00:16:20.423+02:00: Crate docs contract: README and `src/lib.rs` must explicitly lead with the supported MVP surface (errors, logs, feature usage), mention the async runtime requirement (`tokio` in examples), and avoid implying silent disabled mode or automatic retries. Good first-task guidance also tells users that `send().await` returns `SubmissionResult` they can inspect.
+- 2026-05-20T14:53:27.948+02:00: Release docs now describe one `release.yml` workflow with two manual operator paths: prepare release creates the GitHub prerelease and artifact bundle, while publish consumes the prior `release_tag` as the only publish identity. README wording should keep both paths explicitly default-branch-only and avoid referencing a separate publish workflow once the merge lands.
 
 ## Team Coordination
 
@@ -25,3 +26,7 @@
 - 2026-05-18T11:44:38.999+02:00: Docs updated for Client → ExceptionlessClient rename. User-facing surfaces (README, examples) now reflect idiomatic naming that matches Exceptionless.NET client. Type renamed in all internal references (builder.rs, error.rs, client.rs, lib.rs). Verified: examples compile clean, tests pass, documentation consistent.
 - 2026-05-18T13:31:36.000Z: Added eight screenshots from `images/` inline under Error, Log, and Feature sections in README.md using repo-relative Markdown image links. Enhanced visual documentation for first-time user onboarding. Commit: `2b7851f docs: add screenshots to error, log, and feature sections`.
 - 2026-05-18T13:54:28Z: Repository renamed from exceptionless.rust to exceptionless-rs. Leela updated GitHub, Cargo.toml, README, and team metadata. Fry updated all documentation references. Commit: fedea6d refactor: rename repository to exceptionless-rs.
+
+- 2026-05-20T14:53:27.948+02:00: README release guidance should describe a single `.github/workflows/release.yml` workflow with **Prepare release** and **Publish existing tag** paths, keep both paths explicitly default-branch-only, and keep `release_tag` documented as the publish source of truth.
+
+- 2026-05-20T12:53:27.948Z: README release docs were refreshed to match the merged workflow shipped in commit `2bdfb5d` (`fix(ci): merge release workflow`). Operator guidance now points to one workflow with two manual paths and keeps the branch/environment and `release_tag` guardrails explicit.
