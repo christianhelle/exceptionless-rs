@@ -1,9 +1,10 @@
+use std::{error::Error as StdError, fmt};
+
 pub mod http;
 pub mod response;
 
 use async_trait::async_trait;
 use serde_json::to_string;
-use thiserror::Error;
 
 use crate::{
     config::{ClientConfig, ConfigError},
@@ -40,14 +41,45 @@ pub trait Transport: Send + Sync {
     ) -> Result<SubmissionResult, TransportError>;
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum TransportError {
-    #[error("{0}")]
-    InvalidConfiguration(#[from] ConfigError),
-    #[error("failed to serialize event payload: {0}")]
-    Serialization(#[from] serde_json::Error),
-    #[error("request failed: {0}")]
+    InvalidConfiguration(ConfigError),
+    Serialization(serde_json::Error),
     Request(String),
-    #[error("failed to read response body: {0}")]
     ResponseBody(String),
+}
+
+impl fmt::Display for TransportError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidConfiguration(error) => write!(f, "{error}"),
+            Self::Serialization(error) => {
+                write!(f, "failed to serialize event payload: {error}")
+            }
+            Self::Request(message) => write!(f, "request failed: {message}"),
+            Self::ResponseBody(message) => write!(f, "failed to read response body: {message}"),
+        }
+    }
+}
+
+impl StdError for TransportError {
+    fn source(&self) -> Option<&(dyn StdError + 'static)> {
+        match self {
+            Self::InvalidConfiguration(error) => Some(error),
+            Self::Serialization(error) => Some(error),
+            Self::Request(_) | Self::ResponseBody(_) => None,
+        }
+    }
+}
+
+impl From<ConfigError> for TransportError {
+    fn from(error: ConfigError) -> Self {
+        Self::InvalidConfiguration(error)
+    }
+}
+
+impl From<serde_json::Error> for TransportError {
+    fn from(error: serde_json::Error) -> Self {
+        Self::Serialization(error)
+    }
 }

@@ -1,6 +1,6 @@
 mod support;
 
-use std::error::Error as StdError;
+use std::{error::Error as StdError, io};
 
 use exceptionless::{
     ClientError, ExceptionlessClient,
@@ -107,4 +107,83 @@ fn exceptionless_client_with_api_key_constructor_remains_available() {
     let client = ExceptionlessClient::with_api_key("test-api-key");
 
     assert_eq!(client.config().api_key(), "test-api-key");
+}
+
+#[test]
+fn config_error_display_messages_are_stable() {
+    let disabled = ConfigError::Disabled;
+    assert_eq!(disabled.to_string(), "client is disabled");
+    assert!(disabled.source().is_none());
+
+    let missing_api_key = ConfigError::MissingApiKey;
+    assert_eq!(missing_api_key.to_string(), "api key must not be blank");
+    assert!(missing_api_key.source().is_none());
+
+    let invalid_server_url = ConfigError::InvalidServerUrl("https:// bad".into());
+    assert_eq!(
+        invalid_server_url.to_string(),
+        "invalid server url: https:// bad"
+    );
+    assert!(invalid_server_url.source().is_none());
+}
+
+#[test]
+fn transport_error_display_messages_and_sources_are_stable() {
+    let invalid_config = TransportError::from(ConfigError::MissingApiKey);
+    assert_eq!(invalid_config.to_string(), "api key must not be blank");
+    let config_source = invalid_config.source().expect("config source should exist");
+    assert_eq!(config_source.to_string(), "api key must not be blank");
+    assert!(config_source.downcast_ref::<ConfigError>().is_some());
+    assert!(config_source.source().is_none());
+
+    let serialization =
+        TransportError::from(serde_json::Error::io(io::Error::other("encode boom")));
+    assert_eq!(
+        serialization.to_string(),
+        "failed to serialize event payload: encode boom"
+    );
+    let serialization_source = serialization
+        .source()
+        .expect("serialization source should exist");
+    assert_eq!(serialization_source.to_string(), "encode boom");
+    assert!(
+        serialization_source
+            .downcast_ref::<serde_json::Error>()
+            .is_some()
+    );
+
+    let request = TransportError::Request("timeout".into());
+    assert_eq!(request.to_string(), "request failed: timeout");
+    assert!(request.source().is_none());
+
+    let response_body = TransportError::ResponseBody("connection closed".into());
+    assert_eq!(
+        response_body.to_string(),
+        "failed to read response body: connection closed"
+    );
+    assert!(response_body.source().is_none());
+}
+
+#[test]
+fn client_error_display_messages_and_sources_are_stable() {
+    let empty_batch = ClientError::EmptyBatch;
+    assert_eq!(
+        empty_batch.to_string(),
+        "cannot submit an empty event batch"
+    );
+    assert!(empty_batch.source().is_none());
+
+    let wrapped = ClientError::from(TransportError::from(ConfigError::MissingApiKey));
+    assert_eq!(wrapped.to_string(), "api key must not be blank");
+
+    let transport_source = wrapped.source().expect("transport source should exist");
+    assert_eq!(transport_source.to_string(), "api key must not be blank");
+    assert!(transport_source.downcast_ref::<TransportError>().is_some());
+
+    let config_source = transport_source
+        .source()
+        .expect("config source should exist");
+    assert_eq!(config_source.to_string(), "api key must not be blank");
+    assert!(config_source.downcast_ref::<ConfigError>().is_some());
+    assert!(config_source.source().is_none());
 }
