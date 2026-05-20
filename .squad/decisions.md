@@ -309,6 +309,11 @@
 - Validation rechecked with `cargo test --test regression_submission_path`, `cargo test --test regression_submission_path --features opt-out`, `cargo test --doc`, `cargo test --all-targets`, and `cargo test --all-targets --features opt-out`.
 - No blocking follow-up remains for the overall single-feature `opt-out` work.
 
+### 2026-05-20T13:37:53.920+02:00: User directive
+**By:** Christian Helle (via Copilot)
+**What:** Commit changes in small logical groups without a co-author, and do this automatically for this session and future sessions.
+**Why:** User request — captured for team memory
+
 ## Governance
 - All meaningful changes require team consensus
 - Document architectural decisions here
