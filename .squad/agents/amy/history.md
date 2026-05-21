@@ -41,3 +41,11 @@
 - 2026-05-20T12:53:27.948Z: Amy recorded the workflow-merge guardrails and approved commit `2bdfb5d` (`fix(ci): merge release workflow`). Review confirmed the merged `release.yml` keeps two manual paths, blocks non-default branches, preserves `release_tag` as publish identity, keeps `cargo generate-lockfile`, `cargo test --all-targets`, and `cargo publish --dry-run --locked --allow-dirty`, and still scopes `CARGO_REGISTRY_TOKEN` to the final publish step.
 - 2026-05-20T13:00:42.108+02:00: Amy rejected Farnsworth's first single `opt-out` feature revision for overstated opt-out docs and missing direct `submit_batch()` proof, then approved Bender's narrow three-file fix once the docs told the truth and the direct regression covered synthetic 202 success.
 
+## 2026-05-21 22.48.09 UTC - Scribe: Cross-agent coordination
+
+Team completed parallel refactoring of ExceptionlessClient::error() → capture_error():
+- Bender: API source code changes committed
+- Fry: Documentation and examples updated
+- Amy: Tests updated and validation passed
+
+All work integrated and ready for delivery.
