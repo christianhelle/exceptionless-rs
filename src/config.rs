@@ -1,4 +1,6 @@
-use thiserror::Error;
+use std::{error::Error as StdError, fmt};
+
+use url::Url;
 
 pub const DEFAULT_SERVER_URL: &str = "https://collector.exceptionless.io";
 pub const EVENTS_API_PATH: &str = "/api/v2/events";
@@ -54,7 +56,7 @@ impl ClientConfig {
             return Err(ConfigError::MissingApiKey);
         }
 
-        reqwest::Url::parse(self.normalized_server_url())
+        Url::parse(self.normalized_server_url())
             .map_err(|_| ConfigError::InvalidServerUrl(self.server_url.clone()))?;
 
         Ok(())
@@ -78,12 +80,21 @@ impl Default for ClientConfig {
     }
 }
 
-#[derive(Debug, Error, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConfigError {
-    #[error("client is disabled")]
     Disabled,
-    #[error("api key must not be blank")]
     MissingApiKey,
-    #[error("invalid server url: {0}")]
     InvalidServerUrl(String),
 }
+
+impl fmt::Display for ConfigError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Disabled => f.write_str("client is disabled"),
+            Self::MissingApiKey => f.write_str("api key must not be blank"),
+            Self::InvalidServerUrl(url) => write!(f, "invalid server url: {url}"),
+        }
+    }
+}
+
+impl StdError for ConfigError {}

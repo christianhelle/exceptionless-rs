@@ -202,6 +202,118 @@
 **By:** Fry
 **What:** Updated README release guidance to describe a single `.github/workflows/release.yml` workflow with two manual paths: **Prepare release** and **Publish existing tag**. The docs now state that prepare creates the GitHub prerelease and release artifacts, both paths are restricted to the default branch, and `release_tag` remains the publish source of truth.
 **Why:** Operator-facing docs must match the merged release story without sending users to a deleted standalone publish workflow, while still preserving the existing release guardrails.
+### 2026-05-20T10:28:01.000+02:00: Dependency floor starting point
+**By:** Farnsworth
+**What:** Start dependency reduction with internal-only cuts first: remove the unused `reqwest` `json` feature, then consider replacing direct `thiserror` usage with manual error implementations if the team wants a stricter floor. Treat `reqwest`, `serde_json`, `serde`, `chrono`, `backtrace`, and `async-trait` as locked for now because each one still preserves either the default HTTP path, the JSON payload contract, public wire types, stack-frame behavior, or the public custom-transport seam.
+**Why:** The crate's transport and wire seams are intentionally observable today, so cutting those dependencies without a redesign or feature gate would break downstream custom transports, change event payload types, or degrade shipped MVP behavior.
+
+### 2026-05-20T10:28:01.000+02:00: Dependency audit first slice
+**By:** Bender
+**What:** The smallest safe dependency-reduction slice is to remove direct `thiserror` usage first, then make a separate product and API decision on whether the crate keeps a built-in `reqwest` transport in the default product or feature-gates HTTP transport so `reqwest` can leave the default dependency set.
+**Why:** `thiserror` is internal derive sugar with no user-visible contract, while `reqwest`, `async-trait`, `serde_json`, `chrono`, and `backtrace` are still coupled either to public extension points, the documented default HTTP story, or shipped event behavior.
+
+### 2026-05-20T10:28:01.000+02:00: Dependency reduction proof gate
+**By:** Amy
+**What:** Treat dependency-reduction work as safe only if the plan explicitly preserves or intentionally breaks these consumer-visible contracts: custom transport implementations through `transport::Transport`, `HttpTransport::new(reqwest::Client)` and `HttpTransport::default()`, plus builder `.data(... Into<serde_json::Value>)` calls. Proof must include doctest compilation, example compilation, and the existing payload and config regressions; if transport or response handling changes, add explicit coverage for HTTP response classification and invalid-config and error paths before claiming parity.
+**Why:** The current suite proves the shared submission contract, stack-trace quality, and a few config gates, but it does not by itself prove that swapping or hiding public-facing dependencies is a harmless internal refactor.
+
+### 2026-05-20T10:28:01.000+02:00: Dependency reduction boundary and packaging direction
+**By:** Leela
+**What:** Treat dependency reduction as a boundary decision first, not a crate-swap exercise. The immediate packaging recommendation is to keep one crate and move the built-in HTTP path behind a default-disabled `http` feature if the team proceeds past the no-risk cuts.
+**Why:** `reqwest` drives most of the current runtime footprint, and the present default client surface hardwires that cost through `ExceptionlessClient<T = HttpTransport>`, `ExceptionlessClient::with_api_key`, `transport::http::HttpTransport`, and `ClientConfig::validate()`. A same-crate feature gate removes default HTTP dependency pollution with lower semver and documentation cost than introducing a companion crate immediately.
+
+### 2026-05-20T10:28:01.000+02:00: First no-risk dependency-minimization slice
+**By:** Bender
+**What:** Remove the direct `thiserror` dependency and replace derive usage with manual `Display`, `std::error::Error`, and `From` implementations in `src\config.rs`, `src\error.rs`, and `src\transport\mod.rs`, and remove the unused `reqwest` `json` feature from `Cargo.toml`.
+**Why:** This reduces the direct dependency surface without changing the public API, transport contract, or runtime behavior, and it stays inside the validated no-risk bucket while broader HTTP-boundary decisions remain open.
+
+### 2026-05-20T10:28:01.000+02:00: Approve first dependency cleanup slice
+**By:** Amy
+**What:** APPROVED the slice removing direct `thiserror` usage and trimming the unused `reqwest` `json` feature after focused regression coverage locked `Display` text and `source()` chaining for `ConfigError`, `TransportError`, and `ClientError`.
+**Why:** The slice preserved behavior parity, kept examples compiling, left JSON serialization and parsing on `serde_json`, and cleared the expected local validation bar without widening the transport boundary.
+
+### 2026-05-20T10:28:01.000+02:00: Final gate for first dependency-minimization slice
+**By:** Leela
+**What:** APPROVED the first dependency-minimization slice exactly as shipped: direct `thiserror` removal, trimmed unused `reqwest` `json` feature, stable `ConfigError`, `TransportError`, and `ClientError` display and source behavior, and targeted regression coverage for those error contracts. The next slice must stay narrowly on the packaging boundary around built-in HTTP.
+**Why:** This diff stayed inside the no-risk bucket, the local validation bar passed end to end, and there was no evidence-based reason to block the commit once the behavior-locking regressions were in place.
+
+### 2026-05-20T10:28:01.000+02:00: Approve opt-in HTTP boundary slice
+**By:** Amy
+**What:** APPROVED the opt-in HTTP boundary slice after re-checking both the default lane and the `http` feature lane, including doctest coverage and dependency-tree expectations. Keep docs explicit that consumers without the `http` feature must provide their own transport.
+**Why:** Gating built-in HTTP is only safe if lean-core consumers still have a documented path forward and the optional HTTP experience remains fully validated.
+
+### 2026-05-20T10:28:01.000+02:00: Final gate for opt-in HTTP boundary slice
+**By:** Leela
+**What:** APPROVED Farnsworth's built-in HTTP packaging slice exactly as shipped: default-disabled `http` feature, optional `reqwest`, gated `transport::http` and `ExceptionlessClient::with_api_key()`, `url::Url` in core, and validated default plus `http` release lanes. The next slice must not yet touch `async-trait`, `serde_json`, `chrono`, or broader public-surface reshaping.
+**Why:** This lands the biggest default dependency reduction at the package boundary without mixing in deeper API changes before the team maps the next reference-backed seam.
+
+
+### 2026-05-20T11:59:35.339+02:00: Approve default-enabled HTTP transport slice
+**By:** Amy
+**What:** Approve Farnsworth's opt-out telemetry/default-enabled transport slice.
+**Why:** The diff stays disciplined to packaging and docs: `Cargo.toml` now defaults `http`, while `README.md` and `src/lib.rs` consistently explain the new default path and the lean-core opt-out via `default-features = false`. Revalidation passed in the default lane, lean-core no-default-features lane, explicit `http` lane, and doctest coverage, and the no-default-features dependency tree still excludes `reqwest`/TLS transport baggage.
+**Impact:**
+- Default consumers keep the ergonomic `ExceptionlessClient::with_api_key(...)` path without adding features manually.
+- Opt-out consumers can still build the lean core and supply a custom transport.
+- No blocking follow-up remains for this slice beyond carrying the same validation matrix into final gate review.
+
+### 2026-05-20T11:59:35.339+02:00: User directive
+**By:** Christian Helle (via Copilot)
+**What:** Prefer opt-out telemetry over opt-in `http`; if feasible, make built-in transport enabled by default and let consumers opt out.
+**Why:** User request — captured for team memory
+
+### 2026-05-20T11:59:35.339+02:00: HTTP default opt-out direction
+**By:** Farnsworth
+**What:** Flip the packaging slice to make the existing `http` feature part of `default` instead of renaming or removing it.
+**Why:** This keeps the current transport gate and optional `reqwest` dependency model intact while restoring the documented built-in HTTP experience for default consumers. Opt-out consumers still get the lean core by building with `default-features = false`, which removes `reqwest` and `rustls` from the normal dependency tree without touching the transport trait or wire contract.
+**Impact:**
+- Default builds now include `transport::http::HttpTransport` and `ExceptionlessClient::with_api_key(...)`.
+- Lean-core consumers must switch from doing nothing to explicitly using `default-features = false`.
+- Existing explicit `features = ["http"]` requests remain valid but become redundant.
+
+### 2026-05-20T11:59:35.339+02:00: Final gate for default-enabled HTTP transport slice
+**By:** Leela
+**What:** APPROVE Farnsworth's opt-out telemetry/default-enabled transport slice exactly as-is.
+**Why:** The change stays inside the packaging boundary: `Cargo.toml` restores the default built-in HTTP path, while `README.md` and `src/lib.rs` now consistently explain that lean-core consumers must opt out with `default-features = false`. The validation bar passed across the default lane, explicit `http` lane, no-default-features lane, doctests, and example compilation, with the lean-core dependency tree still excluding `reqwest` and TLS baggage.
+**Impact:**
+- The crate regains the zero-config `ExceptionlessClient::with_api_key(...)` onboarding path in the default build.
+- Lean-core consumers still have an explicit escape hatch that preserves the custom transport seam.
+- Next boundary stays tight: do not touch `async-trait`, `serde_json`, `chrono`, or broader public API reshaping until the team maps the next .NET-backed seam for public dependency reduction.
+
+### 2026-05-20T13:00:42.108+02:00: User directive
+**By:** Christian Helle (via Copilot)
+**What:** The intended feature model is an `opt-out` feature whose enabled state disables telemetry collection.
+**Why:** User request — captured for team memory
+
+### 2026-05-20T13:00:42.108+02:00: Single `opt-out` feature tradeoff
+**By:** Farnsworth
+**What:** To keep `ExceptionlessClient::with_api_key(...)` and `transport::http::HttpTransport` available while exposing only one consumer-facing Cargo feature, the crate now treats `reqwest` as an unconditional dependency and uses `opt-out` only to short-circuit submission to a synthetic success result.
+**Why:** This preserves the transport-facing API shape, but it removes the previous lean-core packaging split: `--no-default-features` no longer drops the built-in HTTP dependency graph.
+
+### 2026-05-20T13:00:42.108+02:00: Reject first single `opt-out` feature revision
+**By:** Amy
+**What:** REJECTED Farnsworth's single `opt-out` feature slice because `README.md` and `src/lib.rs` still overstated disabled-client behavior under `opt-out`, and there was no direct regression proving `submit_batch()` itself returned the same synthetic accepted success without transport calls. Revision ownership moved to Bender.
+**Why:** The single-feature model is only safe to ship if docs tell the truth about the synthetic no-op success path and direct `submit_batch()` coverage proves the short-circuit wins even on the empty-batch edge.
+
+### 2026-05-20T13:00:42.108+02:00: Approve revised single `opt-out` feature slice
+**By:** Amy
+**What:** APPROVED Bender's revision after `README.md` and `src/lib.rs` made the disabled-config behavior explicitly conditional on `opt-out`, and `tests/regression_submission_path.rs` added direct opt-out coverage for both builder `send()` and empty-batch `submit_batch()` synthetic 202 success.
+**Why:** The revision closes the exact review blockers without widening scope, and the validation proof stayed green in normal, doctest, and `opt-out` lanes.
+
+### 2026-05-20T13:00:42.108+02:00: Final gate for single `opt-out` feature revision
+**By:** Leela
+**What:** APPROVED the narrow revision slice exactly as-is: `README.md`, `src/lib.rs`, and `tests/regression_submission_path.rs` now align with the already-implemented single `opt-out` feature model, including direct `submit_batch()` no-op success coverage.
+**Why:** The revision fixes the exact review findings without widening scope. Docs now truthfully state that the built-in HTTP transport and `ExceptionlessClient::with_api_key(...)` stay available in every build while `opt-out` short-circuits submission to a synthetic success, and the regression proof covers that behavior on both `send()` and `submit_batch()`.
+**Impact:**
+- Ready to commit exactly as-is.
+- Validation rechecked with `cargo test --test regression_submission_path`, `cargo test --test regression_submission_path --features opt-out`, `cargo test --doc`, `cargo test --all-targets`, and `cargo test --all-targets --features opt-out`.
+- No blocking follow-up remains for the overall single-feature `opt-out` work.
+
+### 2026-05-20T13:37:53.920+02:00: User directive
+**By:** Christian Helle (via Copilot)
+**What:** Commit changes in small logical groups without a co-author, and do this automatically for this session and future sessions.
+**Why:** User request — captured for team memory
+
 ## Governance
 - All meaningful changes require team consensus
 - Document architectural decisions here

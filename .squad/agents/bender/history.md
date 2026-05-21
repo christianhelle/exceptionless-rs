@@ -7,6 +7,10 @@
 
 ## Learnings
 
+- 2026-05-20T10:28:01.000+02:00: The first no-risk dependency-minimization slice is safe only if `src\config.rs`, `src\error.rs`, and `src\transport\mod.rs` preserve exact `Display`, `Error::source`, and `From` behavior after removing direct `thiserror` usage, while the `reqwest` `json` feature can be dropped because `src\transport\http.rs` already serializes and parses through `serde_json` plus raw request bodies.
+- 2026-05-20T10:28:01.000+02:00: The no-risk dependency-cut pattern for this crate is to keep behavior in `src\config.rs`, `src\error.rs`, and `src\transport\mod.rs` byte-for-byte compatible at the message/API level while replacing `thiserror` derives with manual `Display`/`Error`/`From` impls, and only drop a reqwest feature after proving the code path already serializes via `serde_json` plus raw `.body(...)` in `src\transport\http.rs`. Christian's preference on this slice was strict scope control: run the existing release gate from `.github\workflows\ci.yml` before and after, avoid async-trait or transport-surface redesign, do not commit, and record team artifacts for the dependency-cut decision.
+- 2026-05-20T09:59:21.307+02:00: Dependency-surface choke points for this crate live in `Cargo.toml`, `src\transport\mod.rs`, `src\transport\http.rs`, `src\builder.rs`, `src\error.rs`, and `src\wire\event.rs`; `thiserror` is pure internal sugar, `async-trait` leaks through the public `Transport` extension point, `reqwest` leaks through `HttpTransport` and the default client transport, `serde_json` leaks through all `.data(...)` builder methods, `chrono` leaks through the public `wire::event::Event` date field, and `backtrace` is internal but backs the documented automatic stack-trace behavior.
+- 2026-05-20T09:59:21.307+02:00: The smallest safe dependency-reduction slice is to remove `thiserror` first; removing `reqwest` or `async-trait` from the default dependency set requires a product/API decision about whether this crate stays batteries-included with built-in HTTP transport or splits core transport abstractions from the reqwest-backed implementation.
 - 2026-05-20T01:03:55.309+02:00: For manual crates.io publish, the scaffolded `release_tag` must be the only publish-version source; recomputing from mutable workflow settings can drift from the prerelease artifact that Amy actually reviewed.
 - 2026-05-18T10:43:35.499+02:00: The first milestone targets errors, logs, and feature usage with an idiomatic Rust surface.
 - 2026-05-18T10:43:35.499+02:00: Public SDK calls now land on `Client::error`, `Client::log`, and `Client::feature`, each returning typed builders that share send logic through `src/builder.rs`.
@@ -28,3 +32,10 @@ Completed real backtrace capture using `backtrace` crate with eager symbol resol
 ## 2026-05-19T23:03:55.309Z
 **Scribe Team Update:**
 Amy approved commit `c5359e0` (`fix(ci): trust scaffolded release tag`). The publish path now derives `publish_version` directly from `release_tag`, keeps `CARGO_REGISTRY_TOKEN` scoped to the final publish step, preserves `cargo test --all-targets`, and does not regress `.github/workflows/release.yml`. Owner follow-up remains to configure `CARGO_REGISTRY_TOKEN` on the `release` environment and restrict it to the default branch.
+## 2026-05-20T10:28:01.000+02:00
+**Scribe Team Update:**
+Committed the first dependency-minimization slice as `12ee13024d03cecf53de3f72918f4665fff8e82c` (`refactor: remove thiserror and trim reqwest features`). Amy approved the change after adding focused error-contract regressions, and Leela cleared the final gate with the next slice constrained to the built-in HTTP packaging boundary.
+
+## 2026-05-20T13:00:42.108+02:00
+**Scribe Team Update:**
+Bender revised Amy's rejected single `opt-out` feature slice under reviewer lockout, fixed `README.md`, `src/lib.rs`, and `tests/regression_submission_path.rs`, and committed the approved revision as `87393f6f063b5a9767f63681ff452eef5117917b` (`feat: add opt-out submission coverage`).

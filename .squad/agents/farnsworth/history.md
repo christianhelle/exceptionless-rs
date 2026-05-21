@@ -8,6 +8,10 @@
 ## Learnings
 
 - 2026-05-20T14:53:27.948+02:00: The release automation can stay in one `release.yml` without losing safety if `workflow_dispatch` switches between `prepare-release` and `publish-existing-tag`, both paths fail off the default branch, release prep keeps the GitHub prerelease step, and publish serializes by `release_tag` while scoping `CARGO_REGISTRY_TOKEN` to the final `cargo publish`.
+- 2026-05-20T11:59:35.339+02:00: The opt-out telemetry variant can keep the transport boundary stable by restoring `http` to `default` while still leaving `reqwest` optional behind that feature; the lean-core proof remains `--no-default-features`.
+- 2026-05-20T10:28:01.000+02:00: The first dependency-minimization batch confirmed the safe starting point from the dependency-floor audit: land internal-only cuts first, then treat any `reqwest` reduction beyond unused features as a packaging-boundary change around built-in HTTP rather than a pure cleanup.
+- 2026-05-20T09:59:21.307+02:00: Dependency-floor work in this crate should start at the transport seam: `reqwest` is only needed for `HttpTransport` in `src/transport/http.rs`, while `src/config.rs`, `src/transport/mod.rs`, `src/wire/event.rs`, and `src/wire/error.rs` together prove the request can stay observable as `ClientConfig -> SubmissionRequest -> JSON payload`.
+- 2026-05-20T09:59:21.307+02:00: The current public surface leaks dependency choices to consumers: `HttpTransport::new(reqwest::Client)` exposes `reqwest`, `pub mod wire` exposes `chrono::DateTime<Utc>` plus `serde_json::{Map, Value}`, and custom transport implementers inherit `async-trait` semantics from `transport::Transport`; cutting those crates cleanly needs a deliberate API boundary change or feature gate.
 - 2026-05-20T01:03:55.309+02:00: When release/publish workflow files are reviewer-locked, optional hardening can still ship safely as independent GitHub Actions work; a standalone dependency-audit workflow adds value without reopening the approved publish artifact.
 - 2026-05-18T10:43:35.499+02:00: Audit the .NET client early to capture transport, buffering, and payload-shaping behavior before implementation spreads.
 - 2026-05-18T10:43:35.499+02:00: First transport slice uses `ClientConfig -> SubmissionRequest -> Transport` so tests can fake transport while asserting exact endpoint/auth/payload wire fields.
@@ -32,3 +36,9 @@ Completed optional hardening independently under lockout with commit `e1bc409` (
 ## 2026-05-20T12:53:27.948Z
 **Scribe Team Update:**
 Merged the manual release preparation and publish flows into `.github/workflows/release.yml` in commit `2bdfb5d` (`fix(ci): merge release workflow`). The slice removed `.github/workflows/publish.yml` while preserving default-branch guards, `release_tag` publish identity, publish validation guardrails, and final-step token scoping.
+## Team Coordination
+
+- 2026-05-20T11:59:35.339+02:00: Farnsworth landed commit `229a90474ccd5a8ba4885d9f914d31c864b31026` (`feat(http): enable default transport`), restoring built-in HTTP to the default crate path while preserving the lean-core `--no-default-features` escape hatch.
+- 2026-05-20T10:28:01.000+02:00: Farnsworth's dependency-floor starting point was merged into project decisions and used to keep the first slice limited to the no-risk `thiserror` removal plus the unused `reqwest` `json` feature trim.
+- 2026-05-20T10:28:01.000+02:00: Farnsworth landed commit `b64ddba8548407020ad3bc580f7463f29cf6e553` (`feat(http): gate built-in transport`), proving the second dependency slice by making built-in HTTP opt-in, keeping `reqwest` and `rustls` out of the default dependency graph, and validating both the default and `http` lanes with the full release gates.
+- 2026-05-20T13:00:42.108+02:00: Farnsworth established the single `opt-out` feature semantics—built-in HTTP remains available, `reqwest` is unconditional again, and `opt-out` short-circuits `send()` and `submit_batch()` to synthetic success—but Amy's rejection moved the revision ownership to Bender, so Farnsworth's semantic slice remains uncommitted.

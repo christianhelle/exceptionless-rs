@@ -12,7 +12,7 @@ This initial release focuses on core event reporting:
 - **Log events** — send structured logs with severity levels
 - **Feature tracking** — record feature usage for analytics
 - **Custom metadata** — add tags, user identity, version, and arbitrary data to any event
-- **Async/await** — all submission is non-blocking; built on `async-trait` and `reqwest`
+- **Async/await** — all submission is non-blocking; the built-in HTTP transport uses `reqwest`
 - **Bearer authentication** — events submitted with your API key to `collector.exceptionless.io` (or a custom server)
 
 ### Not Yet Supported
@@ -32,8 +32,16 @@ This initial release focuses on core event reporting:
 ```toml
 [dependencies]
 exceptionless = "0.1"
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 ```
+
+If you need telemetry calls to stay wired in but become no-op successes, enable the `opt-out` feature:
+
+```toml
+[dependencies]
+exceptionless = { version = "0.1", features = ["opt-out"] }
+```
+
+Opting out of telemetry data collection is a common requirement for local development and testing. With `opt-out` enabled, all calls to `.send().await?` and `submit_batch(...).await?` succeed without sending any data, so you can keep the same code paths without needing test-specific configuration or transports.
 
 ### 2. Create a Client
 
@@ -185,6 +193,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+`exceptionless::transport::http::HttpTransport` and `ExceptionlessClient::with_api_key(...)` are available in every build. Enabling `opt-out` keeps the same API surface, but all `send()` and `submit_batch()` paths return success without sending anything.
+
 ### Disable the Client
 
 For local development or testing, you can disable event submission:
@@ -194,7 +204,11 @@ let config = ClientConfig::new("YOUR_API_KEY")
     .with_enabled(false);
 ```
 
-When disabled, `send()` returns a configuration error before any request is sent, so tests should either use a test transport or skip submission.
+When disabled, `send()` and `submit_batch()` return a configuration error before any request is sent unless the `opt-out` Cargo feature is enabled, so tests should either use a test transport, enable `opt-out`, or skip submission.
+
+### Compile-Time Opt-Out
+
+If you enable the `opt-out` Cargo feature, telemetry submission becomes a no-op success. Calls such as `.send().await?` and `submit_batch(...).await?` still succeed, even when the client is disabled, but no request is serialized or submitted.
 
 ---
 

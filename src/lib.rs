@@ -8,7 +8,7 @@
 //! - Error events with captured stack frames and inner error chaining
 //! - Log events with optional source, level, tags, user identity, version, and custom data
 //! - Feature usage events with tags, user identity, version, and custom data
-//! - Direct async submission to `POST /api/v2/events`
+//! - Direct async submission to `POST /api/v2/events` with the default built-in HTTP transport
 //! - Default hosted collector or a custom self-hosted Exceptionless server
 //! - Custom transports through the [`transport::Transport`] trait
 //!
@@ -93,8 +93,12 @@
 //! }
 //! ```
 //!
-//! Disabling a [`config::ClientConfig`] with [`config::ClientConfig::with_enabled`] causes
-//! submission to fail before the transport is invoked.
+//! The built-in HTTP transport is available in every build. Enabling the `opt-out`
+//! Cargo feature makes `send()` and `submit_batch()` return a no-op success without
+//! invoking the transport, even if the client config is disabled or otherwise
+//! invalid. Without `opt-out`, disabling a [`config::ClientConfig`] with
+//! [`config::ClientConfig::with_enabled`] still causes submission to fail before the
+//! transport is invoked.
 pub mod builder;
 pub mod client;
 pub mod config;

@@ -1,9 +1,8 @@
 use std::{
     any::{type_name, type_name_of_val},
     error::Error as StdError,
+    fmt,
 };
-
-use thiserror::Error;
 
 use crate::{
     builder::EventBuilder,
@@ -13,12 +12,34 @@ use crate::{
     wire::error::{ErrorPayload, StackFrame},
 };
 
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum ClientError {
-    #[error("cannot submit an empty event batch")]
     EmptyBatch,
-    #[error(transparent)]
-    Transport(#[from] TransportError),
+    Transport(TransportError),
+}
+
+impl fmt::Display for ClientError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::EmptyBatch => f.write_str("cannot submit an empty event batch"),
+            Self::Transport(error) => write!(f, "{error}"),
+        }
+    }
+}
+
+impl StdError for ClientError {
+    fn source(&self) -> Option<&(dyn StdError + 'static)> {
+        match self {
+            Self::EmptyBatch => None,
+            Self::Transport(error) => Some(error),
+        }
+    }
+}
+
+impl From<TransportError> for ClientError {
+    fn from(error: TransportError) -> Self {
+        Self::Transport(error)
+    }
 }
 
 #[derive(Debug)]
