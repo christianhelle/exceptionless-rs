@@ -50,3 +50,11 @@ Team completed parallel refactoring of ExceptionlessClient::error() → capture_
 - Amy: Tests updated and validation passed
 
 All work integrated and ready for delivery.
+
+## 2026-05-21 20:57:57 UTC - Scribe: Cargo test diagnosis session
+
+Amy diagnosed and fixed deterministic `E0599` compile errors in cargo test suite:
+- Root cause: stale `ExceptionlessClient::error(...)` calls in acceptance/regression tests after public API rename
+- Solution: updated test call sites to use new `capture_error(...)` method
+- Outcome: cargo test suite passing with all validations confirmed
+- Commit reference: 8b0485f
