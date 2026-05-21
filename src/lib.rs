@@ -6,7 +6,7 @@
 //! The main path is [`ExceptionlessClient`]. In a typical application you:
 //!
 //! 1. create a client with [`ExceptionlessClient::with_api_key`],
-//! 2. choose [`ExceptionlessClient::error`], [`ExceptionlessClient::log`], or
+//! 2. choose [`ExceptionlessClient::capture_error`], [`ExceptionlessClient::log`], or
 //!    [`ExceptionlessClient::feature`],
 //! 3. call `send().await`, then inspect the returned
 //!    [`transport::SubmissionResult`].
@@ -62,7 +62,7 @@
 //!
 //! ### Report an error
 //!
-//! Use [`ExceptionlessClient::error`] when you already have an error value and
+//! Use [`ExceptionlessClient::capture_error`] when you already have an error value and
 //! want Exceptionless to capture its message, chain, and current stack frames.
 //!
 //! ```no_run
@@ -75,7 +75,7 @@
 //!     let error = io::Error::other("disk is full");
 //!
 //!     client
-//!         .error(&error)
+//!         .capture_error(&error)
 //!         .source("billing-import")
 //!         .tag("storage")
 //!         .data("tenant", "acme")

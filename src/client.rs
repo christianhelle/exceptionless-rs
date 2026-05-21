@@ -128,7 +128,7 @@ impl<T: Transport> ExceptionlessClient<T> {
     ///     let parse_error = "abc".parse::<u32>().unwrap_err();
     ///
     ///     client
-    ///         .error(&parse_error)
+    ///         .capture_error(&parse_error)
     ///         .source("user_input")
     ///         .tag("validation")
     ///         .data("raw_value", "abc")
@@ -138,7 +138,7 @@ impl<T: Transport> ExceptionlessClient<T> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn error<'a, E>(&'a self, error: &'a E) -> ErrorEventBuilder<'a, T>
+    pub fn capture_error<'a, E>(&'a self, error: &'a E) -> ErrorEventBuilder<'a, T>
     where
         E: StdError + 'static + ?Sized,
     {
@@ -208,7 +208,7 @@ impl<T: Transport> ExceptionlessClient<T> {
     ///
     /// This is the low-level escape hatch when you already have an [`Event`]
     /// value and do not need one of the typed builders returned by
-    /// [`Self::error`], [`Self::log`], or [`Self::feature`].
+    /// [`Self::capture_error`], [`Self::log`], or [`Self::feature`].
     ///
     /// # Examples
     ///
