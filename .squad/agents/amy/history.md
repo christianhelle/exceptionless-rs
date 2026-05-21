@@ -7,6 +7,7 @@
 
 ## Learnings
 
+- 2026-05-21T22:57:57.440+02:00: For public API rename regressions, the fastest deterministic loop is a focused `cargo test --test ...` over the affected acceptance/regression files; stale call sites fail at compile time with `E0599` before the full validation matrix, then the proof closes with `cargo test --all-targets`, `cargo test --all-targets --features opt-out`, `cargo build --examples`, and `cargo doc --no-deps`.
 - 2026-05-21T22:42:11.831+02:00: ExceptionlessClient::error() → capture_error() is approval-safe when the rename sweep includes rustdoc cross-references in src\builder.rs and src\event.rs, not just call sites. The finished proof for this API rename is cargo test --all-targets, cargo test --all-targets --features opt-out, cargo build --examples, and cargo doc --no-deps; no extra regression tests are needed because the existing acceptance and stack-trace tests already cover the full observable error contract.
 - 2026-05-20T11:59:35.339+02:00: Default-enabled transport changes still need four-lane proof: default, doctests, explicit `--features http`, and `--no-default-features`, plus confirmation that the lean-core lane still excludes `reqwest` and TLS baggage.
 - 2026-05-20T10:28:01.000+02:00: Dependency-cleanup proof for this crate must lock the observable error contract directly: preserve `Display` text and `source()` chaining for `ConfigError`, `TransportError`, and `ClientError`, not just the happy-path submission behavior.

@@ -48,7 +48,7 @@ async fn error_entrypoint_shapes_payload_and_preserves_context() -> Result<(), B
     let error = OuterError { source: InnerError };
 
     client
-        .error(&error)
+        .capture_error(&error)
         .source("checkout")
         .tag("ops")
         .tag("ops")
@@ -120,7 +120,7 @@ async fn stack_trace_from_stdlib_error_has_real_frames() -> Result<(), Box<dyn S
     let client = ExceptionlessClient::new(test_config(), transport.clone());
 
     let err: ParseIntError = "not a number".parse::<i32>().unwrap_err();
-    client.error(&err).send().await?;
+    client.capture_error(&err).send().await?;
 
     let requests = transport.requests();
     let events = payload_events(&requests[0]);
@@ -168,7 +168,7 @@ async fn stack_trace_frames_include_error_site() -> Result<(), Box<dyn StdError>
     let client = ExceptionlessClient::new(test_config(), transport.clone());
 
     let err: ParseIntError = "bad".parse::<i32>().unwrap_err();
-    client.error(&err).send().await?;
+    client.capture_error(&err).send().await?;
 
     let requests = transport.requests();
     let events = payload_events(&requests[0]);
