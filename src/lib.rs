@@ -1,26 +1,32 @@
-//! # Exceptionless client for Rust
+//! # Exceptionless for Rust
 //!
-//! `exceptionless` is an async Rust client for the current Exceptionless MVP slice:
-//! error reporting, log events, and feature usage tracking.
+//! `exceptionless` is an async client for the first Exceptionless Rust SDK slice:
+//! error reporting, structured logs, and feature usage events.
 //!
-//! ## Supported today
+//! The main path is [`ExceptionlessClient`]. In a typical application you:
 //!
-//! - Error events with captured stack frames and inner error chaining
-//! - Log events with optional source, level, tags, user identity, version, and custom data
-//! - Feature usage events with tags, user identity, version, and custom data
-//! - Direct async submission to `POST /api/v2/events` with the default built-in HTTP transport
-//! - Default hosted collector or a custom self-hosted Exceptionless server
-//! - Custom transports through the [`transport::Transport`] trait
+//! 1. create a client with [`ExceptionlessClient::with_api_key`],
+//! 2. choose [`ExceptionlessClient::error`], [`ExceptionlessClient::log`], or
+//!    [`ExceptionlessClient::feature`],
+//! 3. call `send().await`, then inspect the returned
+//!    [`transport::SubmissionResult`].
 //!
-//! ## Not yet supported
+//! This crate targets the hosted Exceptionless collector by default and can also
+//! send to a self-hosted server.
 //!
-//! - Automatic queueing, offline storage, or retry workers
-//! - Server-side settings/config synchronization
-//! - Session tracking
-//! - Plugin hooks
-//! - Logging facade integrations
+//! ## Add it to your application
 //!
-//! ## Quick start
+//! ```toml
+//! [dependencies]
+//! exceptionless = "0.1"
+//! tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+//! ```
+//!
+//! The examples below use `tokio` because it is the easiest copy-paste setup for
+//! a first run on docs.rs. Any async runtime can drive the futures returned by
+//! the client APIs.
+//!
+//! ## First event: start with `ExceptionlessClient`
 //!
 //! ```no_run
 //! use exceptionless::ExceptionlessClient;
@@ -34,38 +40,94 @@
 //!         .source("jobs")
 //!         .level("info")
 //!         .tag("startup")
+//!         .data("region", "eu-west")
 //!         .send()
 //!         .await?;
 //!
-//!     if !result.response.is_success() {
-//!         eprintln!("submission was not accepted: {:?}", result.action);
+//!     if result.response.is_success() {
+//!         println!("event accepted");
+//!     } else {
+//!         eprintln!("event not accepted: {:?}", result.action);
 //!     }
 //!
 //!     Ok(())
 //! }
 //! ```
 //!
-//! ## Common event builders
+//! If you only remember one flow, remember that one: start with
+//! [`ExceptionlessClient`], build the event inline, and inspect the submission
+//! result when you care about delivery outcomes.
+//!
+//! ## Choose the builder that matches the job
+//!
+//! ### Report an error
+//!
+//! Use [`ExceptionlessClient::error`] when you already have an error value and
+//! want Exceptionless to capture its message, chain, and current stack frames.
 //!
 //! ```no_run
-//! use core::num::ParseIntError;
+//! use exceptionless::ExceptionlessClient;
+//! use std::io;
+//!
+//! #[tokio::main]
+//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     let client = ExceptionlessClient::with_api_key("YOUR_API_KEY");
+//!     let error = io::Error::other("disk is full");
+//!
+//!     client
+//!         .error(&error)
+//!         .source("billing-import")
+//!         .tag("storage")
+//!         .data("tenant", "acme")
+//!         .user_identity("user@example.com")
+//!         .send()
+//!         .await?;
+//!
+//!     Ok(())
+//! }
+//! ```
+//!
+//! ### Send a structured log
+//!
+//! Use [`ExceptionlessClient::log`] for application messages that are useful even
+//! when no Rust error exists.
+//!
+//! ```no_run
 //! use exceptionless::ExceptionlessClient;
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let client = ExceptionlessClient::with_api_key("YOUR_API_KEY");
 //!
-//!     let parse_error: ParseIntError = "not a number".parse::<i32>().unwrap_err();
 //!     client
-//!         .error(&parse_error)
-//!         .tag("parsing")
-//!         .source("user_input")
-//!         .data("raw_value", "not a number")
+//!         .log("checkout completed")
+//!         .source("payments")
+//!         .level("info")
+//!         .tag("orders")
+//!         .data("order_id", 42)
+//!         .version("1.2.3")
 //!         .send()
 //!         .await?;
 //!
+//!     Ok(())
+//! }
+//! ```
+//!
+//! ### Track feature usage
+//!
+//! Use [`ExceptionlessClient::feature`] when you want lightweight product usage
+//! signals without introducing a second analytics SDK.
+//!
+//! ```no_run
+//! use exceptionless::ExceptionlessClient;
+//!
+//! #[tokio::main]
+//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     let client = ExceptionlessClient::with_api_key("YOUR_API_KEY");
+//!
 //!     client
-//!         .feature("export_to_pdf")
+//!         .feature("export-to-csv")
+//!         .tag("reporting")
 //!         .user_identity("user@example.com")
 //!         .version("1.2.3")
 //!         .send()
@@ -75,7 +137,11 @@
 //! }
 //! ```
 //!
-//! ## Custom server configuration
+//! ## Self-hosted Exceptionless
+//!
+//! [`ExceptionlessClient::with_api_key`] targets the hosted collector. For a
+//! self-hosted server, build a [`config::ClientConfig`] and pass it to
+//! [`ExceptionlessClient::new`].
 //!
 //! ```no_run
 //! use exceptionless::ExceptionlessClient;
@@ -93,12 +159,51 @@
 //! }
 //! ```
 //!
-//! The built-in HTTP transport is available in every build. Enabling the `opt-out`
-//! Cargo feature makes `send()` and `submit_batch()` return a no-op success without
-//! invoking the transport, even if the client config is disabled or otherwise
-//! invalid. Without `opt-out`, disabling a [`config::ClientConfig`] with
-//! [`config::ClientConfig::with_enabled`] still causes submission to fail before the
-//! transport is invoked.
+//! ## Advanced extension points
+//!
+//! Most users only need [`ExceptionlessClient`] plus the default built-in HTTP
+//! transport. If you need more control:
+//!
+//! - [`ExceptionlessClient::new`] accepts any [`transport::Transport`]
+//!   implementation.
+//! - [`transport`] contains the submission abstractions and the built-in
+//!   [`transport::http::HttpTransport`].
+//! - [`event::Event`] is the ergonomic public event wrapper for direct submission.
+//! - [`wire`] contains the exact low-level payload model used by the transport
+//!   layer and is mainly useful for advanced integrations, custom transports, or
+//!   tests.
+//!
+//! Some advanced examples use `reqwest`, `async-trait`, or `serde_json`.
+//! Docs.rs can compile those snippets because this crate depends on them, but
+//! downstream applications should add those crates explicitly before copying the
+//! advanced examples into their own code.
+//!
+//! ## Supported today
+//!
+//! - Error events with captured stack frames and inner error chaining
+//! - Log events with optional source, level, tags, user identity, version, and
+//!   custom data
+//! - Feature usage events with tags, user identity, version, and custom data
+//! - Direct async submission to `POST /api/v2/events`
+//! - Hosted Exceptionless or a custom self-hosted server
+//! - Custom delivery through the [`transport::Transport`] trait
+//!
+//! ## Out of scope for this crate today
+//!
+//! - Automatic queueing, offline storage, or retry workers
+//! - Server-side settings or configuration synchronization
+//! - Session tracking
+//! - Plugin hooks
+//! - Logging facade integrations
+//!
+//! ## Lightweight caveats
+//!
+//! - `send()` performs direct async submission; there is no background worker yet.
+//! - Disabling [`config::ClientConfig`] with [`config::ClientConfig::with_enabled`]
+//!   makes submissions fail fast before the transport is invoked.
+//! - Enabling the `opt-out` Cargo feature makes `send()` and
+//!   [`ExceptionlessClient::submit_batch`] return a synthetic accepted result
+//!   without invoking the transport.
 pub mod builder;
 pub mod client;
 pub mod config;

@@ -1,3 +1,12 @@
+//! Built-in HTTP transport backed by `reqwest`.
+//!
+//! This module is an advanced integration surface for callers who need to bring
+//! their own configured `reqwest::Client` or inspect how the default wire contract
+//! is issued over HTTP.
+//!
+//! If you copy the examples here into your application, add `reqwest` as a
+//! direct dependency in your own `Cargo.toml`.
+
 use async_trait::async_trait;
 use reqwest::{
     Client,
@@ -6,18 +15,38 @@ use reqwest::{
 
 use super::{SubmissionRequest, SubmissionResult, Transport, TransportError, TransportResponse};
 
+/// Transport implementation that submits event batches with `reqwest`.
+///
+/// Most applications can use [`Default`] and let the high-level client own this
+/// type implicitly. Construct it directly when you need custom TLS, proxies,
+/// timeouts, or shared middleware on the underlying `reqwest::Client`.
+///
+/// # Example
+///
+/// ```
+/// use exceptionless::transport::http::HttpTransport;
+///
+/// let client = reqwest::Client::builder()
+///     .user_agent("my-service/1.0")
+///     .build()
+///     .unwrap();
+///
+/// let transport = HttpTransport::new(client);
+/// ```
 #[derive(Debug, Clone)]
 pub struct HttpTransport {
     client: Client,
 }
 
 impl HttpTransport {
+    /// Wraps an existing `reqwest` client for Exceptionless submissions.
     pub fn new(client: Client) -> Self {
         Self { client }
     }
 }
 
 impl Default for HttpTransport {
+    /// Builds a transport with the crate user agent and default `reqwest` settings.
     fn default() -> Self {
         let client = Client::builder()
             .user_agent(format!("exceptionless-rs/{}", env!("CARGO_PKG_VERSION")))
@@ -29,6 +58,7 @@ impl Default for HttpTransport {
 
 #[async_trait]
 impl Transport for HttpTransport {
+    /// Posts the serialized batch as JSON to the configured Exceptionless endpoint.
     async fn submit_events(
         &self,
         request: SubmissionRequest,

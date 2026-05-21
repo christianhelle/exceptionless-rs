@@ -1,3 +1,5 @@
+//! Error event types and builder APIs.
+
 use std::{
     any::{type_name, type_name_of_val},
     error::Error as StdError,
@@ -12,9 +14,12 @@ use crate::{
     wire::error::{ErrorPayload, StackFrame},
 };
 
+/// Error returned by high-level client submissions.
 #[derive(Debug)]
 pub enum ClientError {
+    /// A batch submission was attempted without any events.
     EmptyBatch,
+    /// The transport failed to serialize or dispatch the request.
     Transport(TransportError),
 }
 
@@ -42,6 +47,35 @@ impl From<TransportError> for ClientError {
     }
 }
 
+/// Fluent builder for error events.
+///
+/// Obtain this from [`ExceptionlessClient::error`]. The builder captures the
+/// Rust error immediately, including its source chain and a filtered backtrace,
+/// then lets you add Exceptionless-specific metadata before sending.
+///
+/// # Examples
+///
+/// ```no_run
+/// use exceptionless::ExceptionlessClient;
+///
+/// #[tokio::main]
+/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+///     let client = ExceptionlessClient::with_api_key("YOUR_API_KEY");
+///     let error = "NaN".parse::<u32>().unwrap_err();
+///
+///     client
+///         .error(&error)
+///         .source("payments")
+///         .tag("validation")
+///         .data("raw_amount", "NaN")
+///         .user_identity("user@example.com")
+///         .version("2026.05.21")
+///         .send()
+///         .await?;
+///
+///     Ok(())
+/// }
+/// ```
 #[derive(Debug)]
 pub struct ErrorEventBuilder<'a, T: Transport> {
     inner: EventBuilder<'a, T>,
@@ -59,31 +93,37 @@ impl<'a, T: Transport> ErrorEventBuilder<'a, T> {
         }
     }
 
+    /// Sets the logical event source.
     pub fn source(mut self, source: impl Into<String>) -> Self {
         self.inner = self.inner.source(source);
         self
     }
 
+    /// Adds a tag to the event.
     pub fn tag(mut self, tag: impl Into<String>) -> Self {
         self.inner = self.inner.tag(tag);
         self
     }
 
+    /// Attaches structured data to the event.
     pub fn data(mut self, key: impl Into<String>, value: impl Into<serde_json::Value>) -> Self {
         self.inner = self.inner.data(key, value);
         self
     }
 
+    /// Sets the user identity associated with the event.
     pub fn user_identity(mut self, identity: impl Into<String>) -> Self {
         self.inner = self.inner.user_identity(identity);
         self
     }
 
+    /// Sets the application or deployment version attached to the event.
     pub fn version(mut self, version: impl Into<String>) -> Self {
         self.inner = self.inner.version(version);
         self
     }
 
+    /// Submits the error event.
     pub async fn send(self) -> Result<SubmissionResult, ClientError> {
         self.inner.send().await
     }
