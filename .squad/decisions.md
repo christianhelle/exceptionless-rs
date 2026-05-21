@@ -314,6 +314,31 @@
 **What:** Commit changes in small logical groups without a co-author, and do this automatically for this session and future sessions.
 **Why:** User request — captured for team memory
 
+### 2026-05-21T14:27:14.102+02:00: Rustdoc boundaries for docs.rs
+**By:** Leela
+**What:** Keep the docs.rs overhaul in three source commits: ergonomic client/builders/event docs first, advanced config/transport/wire docs second, and `src\lib.rs` last as the crate-level stitcher.
+**Why:** Users should meet the high-level path before the extension seams. Advanced examples also need explicit downstream dependency callouts so docs.rs copy-paste does not imply `reqwest`, `async-trait`, or `serde_json` appear by magic in consumer crates.
+**Files:**
+- `src\client.rs`
+- `src\builder.rs`
+- `src\error.rs`
+- `src\feature.rs`
+- `src\log.rs`
+- `src\event.rs`
+- `src\config.rs`
+- `src\transport\mod.rs`
+- `src\transport\http.rs`
+- `src\transport\response.rs`
+- `src\wire\mod.rs`
+- `src\wire\event.rs`
+- `src\wire\error.rs`
+- `src\lib.rs`
+
+### 2026-05-21T16:00:05.543+02:00: Rustdoc PR targets main with product-only branch
+**By:** Leela
+**What:** The rustdoc overhaul PR should target `main` from `docs`, and the branch should be rebuilt to carry only the three product rustdoc commits covering `src\client.rs` and builder entrypoints, advanced seam docs in `src\config.rs` plus `src\transport\*` and `src\wire\*`, and the crate-level stitch-up in `src\lib.rs`. `.squad\` history, inbox, identity, and skill updates stay local unless explicitly requested for review.
+**Why:** Repo state shows `main` as the default branch and no active `dev` branch, so targeting `main` matches the live integration path here. Keeping the PR product-only preserves a sharp review boundary and avoids mixing coordination artifacts with the docs.rs slice.
+
 ## Governance
 - All meaningful changes require team consensus
 - Document architectural decisions here
