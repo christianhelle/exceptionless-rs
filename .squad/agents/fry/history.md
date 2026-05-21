@@ -30,3 +30,12 @@
 - 2026-05-20T14:53:27.948+02:00: README release guidance should describe a single `.github/workflows/release.yml` workflow with **Prepare release** and **Publish existing tag** paths, keep both paths explicitly default-branch-only, and keep `release_tag` documented as the publish source of truth.
 
 - 2026-05-20T12:53:27.948Z: README release docs were refreshed to match the merged workflow shipped in commit `2bdfb5d` (`fix(ci): merge release workflow`). Operator guidance now points to one workflow with two manual paths and keeps the branch/environment and `release_tag` guardrails explicit.
+- 2026-05-21T22:42:11.831+02:00: Completed docs/examples slice for ExceptionlessClient::error() → capture_error() rename. Updated README quick-start error example, examples/error_basic.rs, and all crate-level documentation in lib.rs, client.rs, builder.rs, event.rs, and error.rs. All documentation now consistently references the capture_error() method. Examples compile clean; doc build passes with zero warnings. Commit: `3d8ed51 docs: update capture_error() references in README and examples`.
+## 2026-05-21 22.48.09 UTC - Scribe: Cross-agent coordination
+
+Team completed parallel refactoring of ExceptionlessClient::error() → capture_error():
+- Bender: API source code changes committed
+- Fry: Documentation and examples updated
+- Amy: Tests updated and validation passed
+
+All work integrated and ready for delivery.

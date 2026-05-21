@@ -12,7 +12,7 @@ use crate::{
 /// Shared fluent builder for event metadata.
 ///
 /// Most users interact with this behavior through the more specific builders
-/// returned by [`crate::client::ExceptionlessClient::error`],
+/// returned by [`crate::client::ExceptionlessClient::capture_error`],
 /// [`crate::client::ExceptionlessClient::log`], and
 /// [`crate::client::ExceptionlessClient::feature`]. This type holds the common
 /// metadata operations that all of those builders expose.

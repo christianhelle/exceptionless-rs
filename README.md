@@ -78,7 +78,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(e) => {
             // Send the error to Exceptionless
             client
-                .error(&e)
+                .capture_error(&e)
                 .tag("parsing")
                 .source("user_input")
                 .send()

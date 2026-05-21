@@ -2,6 +2,11 @@
 
 ## Active Decisions
 
+### 2026-05-21T22:57:57.440+02:00: Diagnose cargo test failure after capture_error rename
+**By:** Amy
+**What:** `cargo test` was failing with deterministic `E0599` compile errors because `tests/acceptance_errors.rs` and `tests/regression_error_stack_trace.rs` still called `ExceptionlessClient::error(...)` after the public API had been renamed to `capture_error(...)`. The fix stays at the observable seam: update those acceptance/regression tests to call `capture_error(...)`, keep the existing payload and stack-trace assertions, and prove the rename with the focused error-test loop plus the full validation matrix.
+**Why:** This was a parity gap in the test slice, not a transport or runtime defect. The quickest trustworthy loop was the failing test compile itself, and the existing acceptance/regression seam already covered the real user-facing contract once the stale method name was corrected.
+
 ### 2026-05-18T10:43:35.499+02:00: Initial squad roster
 **By:** Christian Helle (confirmed via Copilot)
 **What:** The project uses a Futurama-cast squad with Leela as Lead, Bender as Rust SDK Dev, Farnsworth as Integration Dev, Amy as Tester, Fry as Docs/DevRel, plus Scribe and Ralph.

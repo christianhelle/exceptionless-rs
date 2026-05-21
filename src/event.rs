@@ -40,7 +40,7 @@ pub struct Event {
 impl Event {
     /// Creates an Exceptionless error event from a prepared [`ErrorPayload`].
     ///
-    /// This is the low-level alternative to [`crate::client::ExceptionlessClient::error`]
+    /// This is the low-level alternative to [`crate::client::ExceptionlessClient::capture_error`]
     /// when you already have an Exceptionless-shaped payload.
     ///
     /// # Examples

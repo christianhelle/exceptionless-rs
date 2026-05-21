@@ -49,7 +49,7 @@ impl From<TransportError> for ClientError {
 
 /// Fluent builder for error events.
 ///
-/// Obtain this from [`ExceptionlessClient::error`]. The builder captures the
+/// Obtain this from [`ExceptionlessClient::capture_error`]. The builder captures the
 /// Rust error immediately, including its source chain and a filtered backtrace,
 /// then lets you add Exceptionless-specific metadata before sending.
 ///
@@ -64,7 +64,7 @@ impl From<TransportError> for ClientError {
 ///     let error = "NaN".parse::<u32>().unwrap_err();
 ///
 ///     client
-///         .error(&error)
+///         .capture_error(&error)
 ///         .source("payments")
 ///         .tag("validation")
 ///         .data("raw_amount", "NaN")

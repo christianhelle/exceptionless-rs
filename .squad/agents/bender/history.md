@@ -7,6 +7,8 @@
 
 ## Learnings
 
+- 2026-05-21T22:42:11.831+02:00: Completed API rename of ExceptionlessClient::error() to capture_error() across src/client.rs, src/lib.rs, src/error.rs, src/builder.rs, and src/event.rs; all rustdoc cross-references updated; doc test suite (26 tests) passes cleanly. Tests in tests/*.rs remain authored by Fry/Amy per charter boundary and are awaiting their update slice.
+- 2026-05-21T22:37:26.919+02:00: Renaming `ExceptionlessClient::error` requires a full public-surface sweep across the method definition in `src\client.rs`, rustdoc cross-references in `src\builder.rs`, `src\error.rs`, `src\event.rs`, and `src\lib.rs`, plus user-facing call sites in `tests\acceptance_errors.rs`, `tests\regression_error_stack_trace.rs`, `examples\error_basic.rs`, and `README.md`; `cargo test --doc` and example compilation are part of the compatibility gate.
 - 2026-05-20T10:28:01.000+02:00: The first no-risk dependency-minimization slice is safe only if `src\config.rs`, `src\error.rs`, and `src\transport\mod.rs` preserve exact `Display`, `Error::source`, and `From` behavior after removing direct `thiserror` usage, while the `reqwest` `json` feature can be dropped because `src\transport\http.rs` already serializes and parses through `serde_json` plus raw request bodies.
 - 2026-05-20T10:28:01.000+02:00: The no-risk dependency-cut pattern for this crate is to keep behavior in `src\config.rs`, `src\error.rs`, and `src\transport\mod.rs` byte-for-byte compatible at the message/API level while replacing `thiserror` derives with manual `Display`/`Error`/`From` impls, and only drop a reqwest feature after proving the code path already serializes via `serde_json` plus raw `.body(...)` in `src\transport\http.rs`. Christian's preference on this slice was strict scope control: run the existing release gate from `.github\workflows\ci.yml` before and after, avoid async-trait or transport-surface redesign, do not commit, and record team artifacts for the dependency-cut decision.
 - 2026-05-20T09:59:21.307+02:00: Dependency-surface choke points for this crate live in `Cargo.toml`, `src\transport\mod.rs`, `src\transport\http.rs`, `src\builder.rs`, `src\error.rs`, and `src\wire\event.rs`; `thiserror` is pure internal sugar, `async-trait` leaks through the public `Transport` extension point, `reqwest` leaks through `HttpTransport` and the default client transport, `serde_json` leaks through all `.data(...)` builder methods, `chrono` leaks through the public `wire::event::Event` date field, and `backtrace` is internal but backs the documented automatic stack-trace behavior.
@@ -39,3 +41,11 @@ Committed the first dependency-minimization slice as `12ee13024d03cecf53de3f7291
 ## 2026-05-20T13:00:42.108+02:00
 **Scribe Team Update:**
 Bender revised Amy's rejected single `opt-out` feature slice under reviewer lockout, fixed `README.md`, `src/lib.rs`, and `tests/regression_submission_path.rs`, and committed the approved revision as `87393f6f063b5a9767f63681ff452eef5117917b` (`feat: add opt-out submission coverage`).
+## 2026-05-21 22.48.09 UTC - Scribe: Cross-agent coordination
+
+Team completed parallel refactoring of ExceptionlessClient::error() → capture_error():
+- Bender: API source code changes committed
+- Fry: Documentation and examples updated
+- Amy: Tests updated and validation passed
+
+All work integrated and ready for delivery.

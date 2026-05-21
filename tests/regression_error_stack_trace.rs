@@ -26,7 +26,7 @@ async fn error_stack_trace_contains_real_call_frames() -> Result<(), Box<dyn Std
     let transport = CapturingTransport::success();
     let client = ExceptionlessClient::new(test_config(), transport.clone());
 
-    client.error(&SimpleError).send().await?;
+    client.capture_error(&SimpleError).send().await?;
 
     let requests = transport.requests();
     let events = payload_events(&requests[0]);
@@ -78,7 +78,7 @@ async fn inner_error_does_not_receive_its_own_backtrace() -> Result<(), Box<dyn 
         }
     }
 
-    client.error(&Outer(SimpleError)).send().await?;
+    client.capture_error(&Outer(SimpleError)).send().await?;
 
     let requests = transport.requests();
     let events = payload_events(&requests[0]);
