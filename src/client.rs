@@ -71,8 +71,8 @@ impl<T: Transport> ExceptionlessClient<T> {
     {
         #[cfg(feature = "opt-out")]
         {
-            let _ = events.into_iter();
-            return Ok(opt_out_submission_result());
+            drop(events);
+            Ok(opt_out_submission_result())
         }
 
         #[cfg(not(feature = "opt-out"))]
