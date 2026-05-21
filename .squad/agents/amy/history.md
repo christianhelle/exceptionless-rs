@@ -7,6 +7,7 @@
 
 ## Learnings
 
+- 2026-05-21T22:42:11.831+02:00: ExceptionlessClient::error() → capture_error() is approval-safe when the rename sweep includes rustdoc cross-references in src\builder.rs and src\event.rs, not just call sites. The finished proof for this API rename is cargo test --all-targets, cargo test --all-targets --features opt-out, cargo build --examples, and cargo doc --no-deps; no extra regression tests are needed because the existing acceptance and stack-trace tests already cover the full observable error contract.
 - 2026-05-20T11:59:35.339+02:00: Default-enabled transport changes still need four-lane proof: default, doctests, explicit `--features http`, and `--no-default-features`, plus confirmation that the lean-core lane still excludes `reqwest` and TLS baggage.
 - 2026-05-20T10:28:01.000+02:00: Dependency-cleanup proof for this crate must lock the observable error contract directly: preserve `Display` text and `source()` chaining for `ConfigError`, `TransportError`, and `ClientError`, not just the happy-path submission behavior.
 - 2026-05-20T09:59:21.307+02:00: After gating default HTTP behind a feature, the next high-risk compatibility choice is whether lean-core still exposes `async` custom transports and `serde_json::Value` metadata. Guessing wrong here can silently turn a dependency cleanup into a source-breaking change for transport implementors and callers using `.data(...)`.
@@ -39,3 +40,4 @@
 
 - 2026-05-20T12:53:27.948Z: Amy recorded the workflow-merge guardrails and approved commit `2bdfb5d` (`fix(ci): merge release workflow`). Review confirmed the merged `release.yml` keeps two manual paths, blocks non-default branches, preserves `release_tag` as publish identity, keeps `cargo generate-lockfile`, `cargo test --all-targets`, and `cargo publish --dry-run --locked --allow-dirty`, and still scopes `CARGO_REGISTRY_TOKEN` to the final publish step.
 - 2026-05-20T13:00:42.108+02:00: Amy rejected Farnsworth's first single `opt-out` feature revision for overstated opt-out docs and missing direct `submit_batch()` proof, then approved Bender's narrow three-file fix once the docs told the truth and the direct regression covered synthetic 202 success.
+
