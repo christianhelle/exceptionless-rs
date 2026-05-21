@@ -1,33 +1,81 @@
+//! Advanced event payload types that mirror the JSON sent to Exceptionless.
+//!
+//! Most applications should prefer the high-level builder APIs. Reach for this
+//! module when implementing custom transports, snapshotting the exact wire payload,
+//! or constructing events directly for integration-heavy scenarios.
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 use super::error::ErrorPayload;
 
+/// Event type used for error submissions.
 pub const TYPE_ERROR: &str = "error";
+/// Event type used for log submissions.
 pub const TYPE_LOG: &str = "log";
+/// Event type used for feature-usage submissions.
 pub const TYPE_USAGE: &str = "usage";
+/// Data key that stores the serialized [`ErrorPayload`].
 pub const DATA_KEY_ERROR: &str = "@error";
+/// Data key that stores the log severity level.
 pub const DATA_KEY_LEVEL: &str = "@level";
+/// Data key that stores the user identity string.
 pub const DATA_KEY_USER: &str = "@user";
+/// Data key that stores the application version string.
 pub const DATA_KEY_VERSION: &str = "@version";
 
+/// Wire-format event sent to the Exceptionless `/api/v2/events` endpoint.
+///
+/// This is the lowest-level public event representation in the crate. It is useful
+/// when you need exact control over the serialized payload or want to integrate a
+/// custom transport without going through the higher-level event builders.
+///
+/// If you want the ergonomic public event wrapper used by
+/// [`crate::client::ExceptionlessClient::submit`], use [`crate::event::Event`]
+/// instead.
+///
+/// # Example
+///
+/// ```
+/// use exceptionless::wire::event::Event;
+/// use serde_json::json;
+///
+/// let event = Event::log("worker started")
+///     .with_source("jobs")
+///     .with_level("info")
+///     .with_tag("startup")
+///     .with_data("region", json!("eu-west"));
+///
+/// assert_eq!(event.event_type, "log");
+/// assert_eq!(event.message.as_deref(), Some("worker started"));
+/// ```
+///
+/// If you copy this example into your application, add `serde_json` as a direct
+/// dependency in your own crate.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Event {
+    /// Exceptionless event type such as `"error"`, `"log"`, or `"usage"`.
     #[serde(rename = "type")]
     pub event_type: String,
+    /// Optional logical source for the event.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source: Option<String>,
+    /// UTC timestamp written to the wire payload.
     pub date: DateTime<Utc>,
+    /// Event tags with duplicate and blank entries filtered by builder helpers.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub tags: Vec<String>,
+    /// Optional human-readable message.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub message: Option<String>,
+    /// Arbitrary structured data sent alongside the event.
     #[serde(default, skip_serializing_if = "Map::is_empty")]
     pub data: Map<String, Value>,
 }
 
 impl Event {
+    /// Creates a new event with the provided type and the current UTC timestamp.
     pub fn new(event_type: impl Into<String>) -> Self {
         Self {
             event_type: event_type.into(),
@@ -39,6 +87,7 @@ impl Event {
         }
     }
 
+    /// Creates an error event and stores the payload under [`DATA_KEY_ERROR`].
     pub fn error(error: ErrorPayload) -> Self {
         let mut event = Self::new(TYPE_ERROR);
         event.data.insert(
@@ -48,23 +97,27 @@ impl Event {
         event
     }
 
+    /// Creates a log event with the provided message.
     pub fn log(message: impl Into<String>) -> Self {
         let mut event = Self::new(TYPE_LOG);
         event.message = Some(message.into());
         event
     }
 
+    /// Creates a feature-usage event with the feature name stored as `source`.
     pub fn feature_usage(feature_name: impl Into<String>) -> Self {
         let mut event = Self::new(TYPE_USAGE);
         event.source = Some(feature_name.into());
         event
     }
 
+    /// Sets the event source.
     pub fn with_source(mut self, source: impl Into<String>) -> Self {
         self.source = Some(source.into());
         self
     }
 
+    /// Adds a tag when it is non-blank and not already present.
     pub fn with_tag(mut self, tag: impl Into<String>) -> Self {
         let tag = tag.into();
         if !tag.trim().is_empty() && !self.tags.contains(&tag) {
@@ -73,16 +126,19 @@ impl Event {
         self
     }
 
+    /// Sets or replaces the event message.
     pub fn with_message(mut self, message: impl Into<String>) -> Self {
         self.message = Some(message.into());
         self
     }
 
+    /// Inserts structured event data under the provided key.
     pub fn with_data(mut self, key: impl Into<String>, value: Value) -> Self {
         self.data.insert(key.into(), value);
         self
     }
 
+    /// Stores a trimmed severity level under [`DATA_KEY_LEVEL`].
     pub fn with_level(mut self, level: impl AsRef<str>) -> Self {
         let level = level.as_ref().trim();
         if !level.is_empty() {
@@ -92,12 +148,14 @@ impl Event {
         self
     }
 
+    /// Stores the user identity under [`DATA_KEY_USER`].
     pub fn with_user_identity(mut self, identity: impl Into<String>) -> Self {
         self.data
             .insert(DATA_KEY_USER.to_owned(), Value::String(identity.into()));
         self
     }
 
+    /// Stores the application or deployment version under [`DATA_KEY_VERSION`].
     pub fn with_version(mut self, version: impl Into<String>) -> Self {
         self.data
             .insert(DATA_KEY_VERSION.to_owned(), Value::String(version.into()));
