@@ -32,7 +32,6 @@ This initial release focuses on core event reporting:
 ```toml
 [dependencies]
 exceptionless = "0.1"
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 ```
 
 If you need telemetry calls to stay wired in but become no-op successes, enable the `opt-out` feature:
@@ -40,7 +39,6 @@ If you need telemetry calls to stay wired in but become no-op successes, enable 
 ```toml
 [dependencies]
 exceptionless = { version = "0.1", features = ["opt-out"] }
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 ```
 
 Opting out of telemetry data collection is a common requirement for local development and testing. With `opt-out` enabled, all calls to `.send().await?` and `submit_batch(...).await?` succeed without sending any data, so you can keep the same code paths without needing test-specific configuration or transports.
