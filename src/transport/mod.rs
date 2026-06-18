@@ -14,6 +14,8 @@ use std::{error::Error as StdError, fmt};
 pub mod http;
 /// Response classification helpers used by transport implementations.
 pub mod response;
+/// Retry decorator that wraps any [`Transport`] with exponential jittered backoff.
+pub mod retry;
 
 use async_trait::async_trait;
 use serde_json::to_string;
