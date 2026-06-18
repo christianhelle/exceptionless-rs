@@ -75,6 +75,14 @@ impl Transport for SequenceTransport {
 }
 
 #[tokio::test]
+async fn with_api_key_and_retry_creates_client() {
+    let client =
+        exceptionless::ExceptionlessClient::with_api_key_and_retry("test-key");
+    assert_eq!(client.config().api_key(), "test-key");
+    assert!(client.config().is_valid());
+}
+
+#[tokio::test]
 async fn success_passes_through_on_first_attempt() {
     let inner = CapturingTransport::success();
     let policy = retry_policies::policies::ExponentialBackoff::builder()
