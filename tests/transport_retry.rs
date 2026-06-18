@@ -16,23 +16,34 @@ use exceptionless::{
 };
 use support::CapturingTransport;
 
+/// A step in a sequence of transport results.
+#[derive(Debug, Clone)]
+enum TransportStep {
+    Ok(SubmissionResult),
+    NetError(String),
+    BodyError(String),
+}
+
 /// A transport that returns a sequence of results on successive calls.
 #[derive(Debug, Clone)]
 struct SequenceTransport {
-    results: Arc<Vec<TransportResult>>,
+    steps: Arc<Vec<TransportStep>>,
     call_count: Arc<AtomicUsize>,
     requests: Arc<std::sync::Mutex<Vec<SubmissionRequest>>>,
 }
 
-#[derive(Debug, Clone)]
-struct TransportResult {
-    submission: SubmissionResult,
-}
-
 impl SequenceTransport {
-    fn new(results: Vec<SubmissionResult>) -> Self {
+    fn ok(results: Vec<SubmissionResult>) -> Self {
         Self {
-            results: Arc::new(results.into_iter().map(|r| TransportResult { submission: r }).collect()),
+            steps: Arc::new(results.into_iter().map(TransportStep::Ok).collect()),
+            call_count: Arc::new(AtomicUsize::new(0)),
+            requests: Arc::new(std::sync::Mutex::new(Vec::new())),
+        }
+    }
+
+    fn mixed(steps: Vec<TransportStep>) -> Self {
+        Self {
+            steps: Arc::new(steps),
             call_count: Arc::new(AtomicUsize::new(0)),
             requests: Arc::new(std::sync::Mutex::new(Vec::new())),
         }
@@ -51,7 +62,15 @@ impl Transport for SequenceTransport {
     ) -> Result<SubmissionResult, TransportError> {
         let index = self.call_count.fetch_add(1, Ordering::SeqCst);
         self.requests.lock().unwrap().push(request);
-        Ok(self.results[index].submission.clone())
+        match &self.steps[index] {
+            TransportStep::Ok(result) => Ok(result.clone()),
+            TransportStep::NetError(msg) => {
+                Err(TransportError::Request(msg.clone()))
+            }
+            TransportStep::BodyError(msg) => {
+                Err(TransportError::ResponseBody(msg.clone()))
+            }
+        }
     }
 }
 
@@ -110,11 +129,7 @@ async fn split_and_retry_action_passes_through() {
 #[tokio::test]
 async fn retry_exhaustion_returns_last_retryable_result() {
     let retry = SubmissionResult::from_response(TransportResponse::new(429, None));
-    let inner = SequenceTransport::new(vec![
-        retry.clone(),
-        retry.clone(),
-        retry.clone(),
-    ]);
+    let inner = SequenceTransport::ok(vec![retry.clone(), retry.clone(), retry]);
 
     let policy = retry_policies::policies::ExponentialBackoff::builder()
         .retry_bounds(Duration::from_millis(1), Duration::from_millis(5))
@@ -128,10 +143,49 @@ async fn retry_exhaustion_returns_last_retryable_result() {
 }
 
 #[tokio::test]
+async fn network_error_retries_and_recovers() {
+    let success = SubmissionResult::from_response(TransportResponse::new(202, None));
+    let inner = SequenceTransport::mixed(vec![
+        TransportStep::NetError("connection refused".into()),
+        TransportStep::Ok(success),
+    ]);
+
+    let policy = retry_policies::policies::ExponentialBackoff::builder()
+        .retry_bounds(Duration::from_millis(1), Duration::from_millis(5))
+        .base(2)
+        .build_with_max_retries(2);
+    let transport = RetryingTransport::new(inner.clone(), policy);
+
+    let result = submit_dummy(&transport).await.unwrap();
+    assert_eq!(
+        result.action,
+        exceptionless::transport::SubmissionAction::Success
+    );
+    assert_eq!(inner.attempt_count(), 2);
+}
+
+#[tokio::test]
+async fn non_retryable_transport_error_passes_through() {
+    let inner = SequenceTransport::mixed(vec![TransportStep::BodyError(
+        "unexpected EOF".into(),
+    )]);
+
+    let policy = retry_policies::policies::ExponentialBackoff::builder()
+        .retry_bounds(Duration::from_millis(1), Duration::from_millis(5))
+        .base(2)
+        .build_with_max_retries(2);
+    let transport = RetryingTransport::new(inner.clone(), policy);
+
+    let err = submit_dummy(&transport).await.unwrap_err();
+    assert!(matches!(err, TransportError::ResponseBody(_)));
+    assert_eq!(inner.attempt_count(), 1);
+}
+
+#[tokio::test]
 async fn retry_recovery_on_second_attempt() {
     let retry = SubmissionResult::from_response(TransportResponse::new(429, None));
     let success = SubmissionResult::from_response(TransportResponse::new(202, None));
-    let inner = SequenceTransport::new(vec![retry, success]);
+    let inner = SequenceTransport::ok(vec![retry, success]);
 
     let policy = retry_policies::policies::ExponentialBackoff::builder()
         .retry_bounds(Duration::from_millis(1), Duration::from_millis(5))
