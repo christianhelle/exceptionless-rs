@@ -108,6 +108,26 @@ async fn split_and_retry_action_passes_through() {
 }
 
 #[tokio::test]
+async fn retry_exhaustion_returns_last_retryable_result() {
+    let retry = SubmissionResult::from_response(TransportResponse::new(429, None));
+    let inner = SequenceTransport::new(vec![
+        retry.clone(),
+        retry.clone(),
+        retry.clone(),
+    ]);
+
+    let policy = retry_policies::policies::ExponentialBackoff::builder()
+        .retry_bounds(Duration::from_millis(1), Duration::from_millis(5))
+        .base(2)
+        .build_with_max_retries(2);
+    let transport = RetryingTransport::new(inner.clone(), policy);
+
+    let result = submit_dummy(&transport).await.unwrap();
+    assert_eq!(result.action, exceptionless::transport::SubmissionAction::Retry);
+    assert_eq!(inner.attempt_count(), 3);
+}
+
+#[tokio::test]
 async fn retry_recovery_on_second_attempt() {
     let retry = SubmissionResult::from_response(TransportResponse::new(429, None));
     let success = SubmissionResult::from_response(TransportResponse::new(202, None));
