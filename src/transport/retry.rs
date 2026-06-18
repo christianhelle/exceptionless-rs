@@ -6,10 +6,10 @@ use retry_policies::{RetryDecision, RetryPolicy};
 use super::{SubmissionRequest, SubmissionResult, Transport, TransportError};
 use crate::transport::SubmissionAction;
 
-/// Re-export of [`retry_policies::policies::ExponentialBackoff`] for convenience.
-pub use retry_policies::policies::ExponentialBackoff;
 /// Re-export of [`retry_policies::Jitter`] for convenience.
 pub use retry_policies::Jitter;
+/// Re-export of [`retry_policies::policies::ExponentialBackoff`] for convenience.
+pub use retry_policies::policies::ExponentialBackoff;
 
 /// Transport decorator that retries failed submissions with exponential jittered backoff.
 ///

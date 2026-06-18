@@ -2,8 +2,8 @@
 
 mod support;
 
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
 use async_trait::async_trait;
@@ -64,20 +64,15 @@ impl Transport for SequenceTransport {
         self.requests.lock().unwrap().push(request);
         match &self.steps[index] {
             TransportStep::Ok(result) => Ok(result.clone()),
-            TransportStep::NetError(msg) => {
-                Err(TransportError::Request(msg.clone()))
-            }
-            TransportStep::BodyError(msg) => {
-                Err(TransportError::ResponseBody(msg.clone()))
-            }
+            TransportStep::NetError(msg) => Err(TransportError::Request(msg.clone())),
+            TransportStep::BodyError(msg) => Err(TransportError::ResponseBody(msg.clone())),
         }
     }
 }
 
 #[tokio::test]
 async fn with_api_key_and_retry_creates_client() {
-    let client =
-        exceptionless::ExceptionlessClient::with_api_key_and_retry("test-key");
+    let client = exceptionless::ExceptionlessClient::with_api_key_and_retry("test-key");
     assert_eq!(client.config().api_key(), "test-key");
     assert!(client.config().is_valid());
 }
@@ -91,7 +86,10 @@ async fn success_passes_through_on_first_attempt() {
     let transport = RetryingTransport::new(inner.clone(), policy);
 
     let result = submit_dummy(&transport).await.unwrap();
-    assert_eq!(result.action, exceptionless::transport::SubmissionAction::Success);
+    assert_eq!(
+        result.action,
+        exceptionless::transport::SubmissionAction::Success
+    );
 
     let requests = inner.requests();
     assert_eq!(requests.len(), 1);
@@ -99,16 +97,19 @@ async fn success_passes_through_on_first_attempt() {
 
 #[tokio::test]
 async fn discard_action_passes_through() {
-    let inner = CapturingTransport::new(SubmissionResult::from_response(
-        TransportResponse::new(400, None),
-    ));
+    let inner = CapturingTransport::new(SubmissionResult::from_response(TransportResponse::new(
+        400, None,
+    )));
     let policy = retry_policies::policies::ExponentialBackoff::builder()
         .retry_bounds(Duration::from_millis(10), Duration::from_millis(50))
         .build_with_max_retries(2);
     let transport = RetryingTransport::new(inner.clone(), policy);
 
     let result = submit_dummy(&transport).await.unwrap();
-    assert_eq!(result.action, exceptionless::transport::SubmissionAction::Discard);
+    assert_eq!(
+        result.action,
+        exceptionless::transport::SubmissionAction::Discard
+    );
 
     let requests = inner.requests();
     assert_eq!(requests.len(), 1);
@@ -116,9 +117,9 @@ async fn discard_action_passes_through() {
 
 #[tokio::test]
 async fn split_and_retry_action_passes_through() {
-    let inner = CapturingTransport::new(SubmissionResult::from_response(
-        TransportResponse::new(413, None),
-    ));
+    let inner = CapturingTransport::new(SubmissionResult::from_response(TransportResponse::new(
+        413, None,
+    )));
     let policy = retry_policies::policies::ExponentialBackoff::builder()
         .retry_bounds(Duration::from_millis(10), Duration::from_millis(50))
         .build_with_max_retries(2);
@@ -146,7 +147,10 @@ async fn retry_exhaustion_returns_last_retryable_result() {
     let transport = RetryingTransport::new(inner.clone(), policy);
 
     let result = submit_dummy(&transport).await.unwrap();
-    assert_eq!(result.action, exceptionless::transport::SubmissionAction::Retry);
+    assert_eq!(
+        result.action,
+        exceptionless::transport::SubmissionAction::Retry
+    );
     assert_eq!(inner.attempt_count(), 3);
 }
 
@@ -174,9 +178,7 @@ async fn network_error_retries_and_recovers() {
 
 #[tokio::test]
 async fn non_retryable_transport_error_passes_through() {
-    let inner = SequenceTransport::mixed(vec![TransportStep::BodyError(
-        "unexpected EOF".into(),
-    )]);
+    let inner = SequenceTransport::mixed(vec![TransportStep::BodyError("unexpected EOF".into())]);
 
     let policy = retry_policies::policies::ExponentialBackoff::builder()
         .retry_bounds(Duration::from_millis(1), Duration::from_millis(5))
