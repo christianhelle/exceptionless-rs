@@ -178,6 +178,44 @@
 //! downstream applications should add those crates explicitly before copying the
 //! advanced examples into their own code.
 //!
+//! ## Retry & Backoff
+//!
+//! The built-in transport can be wrapped with automatic retry using exponential
+//! jittered backoff. This handles transient network errors (connection refused,
+//! DNS failures) and retryable HTTP responses (408, 429, 5xx).
+//!
+//! The [`transport::retry::RetryingTransport`] decorator wraps any
+//! [`transport::Transport`] implementation. Construct one with a
+//! [`transport::retry::ExponentialBackoff`] policy:
+//!
+//! ```rust
+//! use std::time::Duration;
+//! use exceptionless::ExceptionlessClient;
+//! use exceptionless::transport::http::HttpTransport;
+//! use exceptionless::transport::retry::{ExponentialBackoff, Jitter, RetryingTransport};
+//!
+//! let policy = ExponentialBackoff::builder()
+//!     .retry_bounds(Duration::from_millis(200), Duration::from_secs(10))
+//!     .jitter(Jitter::Full)
+//!     .base(2)
+//!     .build_with_max_retries(2);
+//!
+//! let transport = RetryingTransport::new(HttpTransport::default(), policy);
+//! let client = ExceptionlessClient::new(
+//!     exceptionless::config::ClientConfig::new("API_KEY"),
+//!     transport,
+//! );
+//! ```
+//!
+//! For the quickest on-ramp, use [`ExceptionlessClient::with_api_key_and_retry`]
+//! which applies a sensible default policy (3 attempts, 200 ms – 10 s, full jitter):
+//!
+//! ```rust
+//! use exceptionless::ExceptionlessClient;
+//!
+//! let client = ExceptionlessClient::with_api_key_and_retry("YOUR_API_KEY");
+//! ```
+//!
 //! ## Supported today
 //!
 //! - Error events with captured stack frames and inner error chaining
@@ -187,10 +225,13 @@
 //! - Direct async submission to `POST /api/v2/events`
 //! - Hosted Exceptionless or a custom self-hosted server
 //! - Custom delivery through the [`transport::Transport`] trait
+//! - Automatic retry with exponential jittered backoff via
+//!   [`transport::retry::RetryingTransport`] or the
+//!   [`ExceptionlessClient::with_api_key_and_retry`] convenience constructor
 //!
 //! ## Out of scope for this crate today
 //!
-//! - Automatic queueing, offline storage, or retry workers
+//! - Automatic queueing or offline storage
 //! - Server-side settings or configuration synchronization
 //! - Session tracking
 //! - Plugin hooks

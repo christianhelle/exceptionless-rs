@@ -46,11 +46,13 @@ impl Transport for CapturingTransport {
 }
 
 #[cfg(not(feature = "opt-out"))]
+#[allow(dead_code)]
 pub fn test_config() -> ClientConfig {
     ClientConfig::new("test-api-key").with_server_url("https://example.com")
 }
 
 #[cfg(not(feature = "opt-out"))]
+#[allow(dead_code)]
 pub fn payload_events(request: &SubmissionRequest) -> Vec<Value> {
     serde_json::from_str(&request.payload).expect("request payload should be valid json")
 }

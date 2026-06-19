@@ -17,6 +17,7 @@ use crate::transport::SubmissionRequest;
 #[cfg(feature = "opt-out")]
 use crate::transport::TransportResponse;
 use crate::transport::http::HttpTransport;
+use crate::transport::retry::RetryingTransport;
 
 /// High-level Exceptionless client.
 ///
@@ -66,6 +67,38 @@ impl ExceptionlessClient<HttpTransport> {
     /// ```
     pub fn with_api_key(api_key: impl Into<String>) -> Self {
         Self::new(ClientConfig::new(api_key), HttpTransport::default())
+    }
+}
+
+impl ExceptionlessClient<RetryingTransport<HttpTransport>> {
+    /// Creates a client with built-in retry, using the default hosted
+    /// Exceptionless collector and a 3-attempt exponential jittered backoff
+    /// policy (200 ms base, 10 s cap, full jitter).
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use exceptionless::ExceptionlessClient;
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// let client = ExceptionlessClient::with_api_key_and_retry("YOUR_API_KEY");
+    /// client.log("hello").send().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn with_api_key_and_retry(api_key: impl Into<String>) -> Self {
+        let policy = super::transport::retry::ExponentialBackoff::builder()
+            .retry_bounds(
+                std::time::Duration::from_millis(200),
+                std::time::Duration::from_secs(10),
+            )
+            .jitter(super::transport::retry::Jitter::Full)
+            .base(2)
+            .build_with_max_retries(2);
+
+        let transport = RetryingTransport::new(HttpTransport::default(), policy);
+        Self::new(ClientConfig::new(api_key), transport)
     }
 }
 

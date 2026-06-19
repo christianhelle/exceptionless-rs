@@ -17,7 +17,7 @@ This initial release focuses on core event reporting:
 
 ### Not Yet Supported
 
-- Event queuing and batch retry
+- Event queuing and offline storage
 - Settings/configuration from the Exceptionless server
 - Session tracking
 - Plugin system
@@ -212,6 +212,48 @@ If you enable the `opt-out` Cargo feature, telemetry submission becomes a no-op 
 
 ---
 
+## Retry & Backoff
+
+The client supports automatic retry with exponential jittered backoff for transient network errors (connection refused, DNS failures) and retryable HTTP responses (408, 429, 5xx).
+
+### Quick start
+
+Use the convenience constructor for a sensible default policy (3 attempts, 200ms–10s, full jitter):
+
+```rust
+use exceptionless::ExceptionlessClient;
+
+let client = ExceptionlessClient::with_api_key_and_retry("YOUR_API_KEY");
+```
+
+### Custom policy
+
+Build your own `RetryingTransport` to tune the backoff parameters:
+
+```rust
+use std::time::Duration;
+use exceptionless::ExceptionlessClient;
+use exceptionless::config::ClientConfig;
+use exceptionless::transport::http::HttpTransport;
+use exceptionless::transport::retry::{ExponentialBackoff, Jitter, RetryingTransport};
+
+let policy = ExponentialBackoff::builder()
+    .retry_bounds(Duration::from_millis(200), Duration::from_secs(10))
+    .jitter(Jitter::Full)
+    .base(2)
+    .build_with_max_retries(2);
+
+let transport = RetryingTransport::new(HttpTransport::default(), policy);
+let client = ExceptionlessClient::new(
+    ClientConfig::new("YOUR_API_KEY"),
+    transport,
+);
+```
+
+See the [retry_transport example](examples/retry_transport.rs) for a complete runnable example.
+
+---
+
 ## Examples
 
 See the `examples/` directory for runnable patterns:
@@ -219,7 +261,8 @@ See the `examples/` directory for runnable patterns:
 - `error_basic.rs` — Capture and send a simple error
 - `log_structured.rs` — Send logs with custom metadata
 - `feature_track.rs` — Record feature usage events
-- `config_custom.rs` — Use a custom server URL
+- `config_custom.rs` — Use a custom server URL with optional retry
+- `retry_transport.rs` — Configure automatic retry with exponential backoff
 
 Run any example with:
 
